@@ -1,0 +1,233 @@
+[
+  {
+    "url": "https://www.masterbakerme.com/product/amarena-fabbri-gourmet-sauce/",
+    "title": "Amarena Fabbri Gourmet Sauce",
+    "image": "https://i0.wp.com/www.masterbakerme.com/wp-content/uploads/2025/03/Fabbri-Amarena-Fabbri-Gourmet-Sauce.jpg?fit=500%2C500&ssl=1",
+    "description": "",
+    "item_code": "",
+    "brand": "Fabbri",
+    "weight": "950 gram",
+    "uom": "BOTTLE",
+    "origin": "Italy"
+  },
+  {
+    "url": "https://www.masterbakerme.com/product/amarena-fabbri-nut-brittle-snackolosi/",
+    "title": "Amarena Fabbri Nut Brittle Snackolosi",
+    "image": "https://i0.wp.com/www.masterbakerme.com/wp-content/uploads/2025/03/Fabbri-Amarena-Fabbri-Nut-Brittle-Snackolosi.jpg?fit=500%2C500&ssl=1",
+    "description": "",
+    "item_code": "",
+    "brand": "Fabbri",
+    "weight": "4.2 KG",
+    "uom": "Pail",
+    "origin": "Italy"
+  },
+  {
+    "url": "https://www.masterbakerme.com/product/confibel-apricot-jam/",
+    "title": "Confibel Apricot Jam",
+    "image": "https://i0.wp.com/www.masterbakerme.com/wp-content/uploads/2019/11/Confibel-Apricot-Jam-1.jpg?fit=500%2C500&ssl=1",
+    "description": "",
+    "item_code": "",
+    "brand": "Dawn",
+    "weight": "13 KG",
+    "uom": "PAL",
+    "origin": "Belgium"
+  },
+  {
+    "url": "https://www.masterbakerme.com/product/bos-special/",
+    "title": "BOS Special",
+    "image": "https://i0.wp.com/www.masterbakerme.com/wp-content/uploads/2025/01/BOS-Special.jpg?fit=500%2C500&ssl=1",
+    "description": "",
+    "item_code": "",
+    "brand": "CSM",
+    "weight": "25 kg",
+    "uom": "BAG",
+    "origin": "Germany"
+  },
+  {
+    "url": "https://www.masterbakerme.com/product/delipaste-salted-butter-caramel/",
+    "title": "Delipaste – Salted Butter Caramel",
+    "image": "https://i0.wp.com/www.masterbakerme.com/wp-content/uploads/2025/03/Delipaste-Salted-Butter-Caramel.jpg?fit=500%2C500&ssl=1",
+    "description": "",
+    "item_code": "",
+    "brand": "Fabbri",
+    "weight": "1.5 KG",
+    "uom": "TIN",
+    "origin": "Italy"
+  },
+  {
+    "url": "https://www.masterbakerme.com/product/top-croccante-decorations/",
+    "title": "Top Croccante – Decorations",
+    "image": "https://i0.wp.com/www.masterbakerme.com/wp-content/uploads/2025/03/Fabbri-Top-Croccante.jpg?fit=500%2C500&ssl=1",
+    "description": "",
+    "item_code": "",
+    "brand": "Fabbri",
+    "weight": "2.5 KG",
+    "uom": "Pkt",
+    "origin": "Italy"
+  },
+  {
+    "url": "https://www.masterbakerme.com/product/nutty-wow-dark-chocolate-marbling/",
+    "title": "Nutty Wow Dark Chocolate Marbling",
+    "image": "https://i0.wp.com/www.masterbakerme.com/wp-content/uploads/2025/03/Fabbri-Nutty-Wow-Dark-Chocolate-Marbling.jpg?fit=500%2C500&ssl=1",
+    "description": "",
+    "item_code": "",
+    "brand": "Fabbri",
+    "weight": "4 KG",
+    "uom": "Pail",
+    "origin": "Italy"
+  },
+  {
+    "url": "https://www.masterbakerme.com/product/chocolate-frosting/",
+    "title": "Chocolate Frosting",
+    "image": "https://i0.wp.com/www.masterbakerme.com/wp-content/uploads/2025/02/Chocolate-frosting.jpg?fit=500%2C500&ssl=1",
+    "description": "",
+    "item_code": "",
+    "brand": "Dawn",
+    "weight": "6 KG",
+    "uom": "PAIL",
+    "origin": "Belgium"
+  },
+  {
+    "url": "https://www.masterbakerme.com/product/vegan-muffin-mix-chocolate/",
+    "title": "Vegan Muffin Mix – Chocolate",
+    "image": "https://i0.wp.com/www.masterbakerme.com/wp-content/uploads/2025/02/Vegan-Muffin-Mix-Chocolate.jpg?fit=500%2C500&ssl=1",
+    "description": "",
+    "item_code": "",
+    "brand": "Dawn",
+    "weight": "10 KG",
+    "uom": "BAG",
+    "origin": "Europe"
+  },
+  {
+    "url": "https://www.masterbakerme.com/product/spread-n-gloss-chocolate-icing/",
+    "title": "Spread N Gloss Chocolate Icing",
+    "image": "https://i0.wp.com/www.masterbakerme.com/wp-content/uploads/2025/03/Spread-N-Gloss-Chocolate-Icing.jpg?fit=500%2C500&ssl=1",
+    "description": "",
+    "item_code": "",
+    "brand": "Dawn",
+    "weight": "10.89 KG",
+    "uom": "PAL",
+    "origin": "USA"
+  },
+  {
+    "url": "https://www.masterbakerme.com/product/spelt-flour-on-order-and-against-forecast-only/",
+    "title": "Spelt Flour 630",
+    "image": "https://i0.wp.com/www.masterbakerme.com/wp-content/uploads/2019/11/Spelt-Flour-630.jpg?fit=500%2C500&ssl=1",
+    "description": "",
+    "item_code": "",
+    "brand": "Schapfen Muhle",
+    "weight": "25 kg",
+    "uom": "Bag",
+    "origin": "Germany"
+  },
+  {
+    "url": "https://www.masterbakerme.com/product/wheat-flour-type-405/",
+    "title": "Wheat Flour – Type 405",
+    "image": "https://i0.wp.com/www.masterbakerme.com/wp-content/uploads/2019/11/Wheat-Flour-T-450.jpg?fit=500%2C500&ssl=1",
+    "description": "",
+    "item_code": "",
+    "brand": "Schapfen Muhle",
+    "weight": "25 kg",
+    "uom": "Bag",
+    "origin": "Germany"
+  },
+  {
+    "url": "https://www.masterbakerme.com/product/organic-spelt-sour-dough-d740/",
+    "title": "Organic Spelt Sour Dough D740",
+    "image": "https://i0.wp.com/www.masterbakerme.com/wp-content/uploads/2019/11/Schapfen-Organic-Spelt-Flour.jpg?fit=500%2C500&ssl=1",
+    "description": "",
+    "item_code": "",
+    "brand": "Schapfen Muhle",
+    "weight": "25 kg",
+    "uom": "Bag",
+    "origin": "Germany"
+  },
+  {
+    "url": "https://www.masterbakerme.com/product/arome-levain-liquid-2x5kg/",
+    "title": "AROME LEVAIN® Liquid Formula",
+    "image": "https://i0.wp.com/www.masterbakerme.com/wp-content/uploads/2019/11/Arome-Levain-Liquid-2x5kg.jpg?fit=500%2C500&ssl=1",
+    "description": "",
+    "item_code": "",
+    "brand": "Le Saffre",
+    "weight": "10 kg",
+    "uom": "BOX",
+    "origin": "France"
+  },
+  {
+    "url": "https://www.masterbakerme.com/product/livendo-rustic-2in1-sour-dough-improver-2-4-dosage/",
+    "title": "Livendo 2in1 Rustic Sourdough",
+    "image": "https://i0.wp.com/www.masterbakerme.com/wp-content/uploads/2025/01/Livendo-Rustic-2-in-1.jpg?fit=500%2C500&ssl=1",
+    "description": "",
+    "item_code": "",
+    "brand": "Lesaffre",
+    "weight": "5 kg",
+    "uom": "BAG",
+    "origin": "Turkey"
+  },
+  {
+    "url": "https://www.masterbakerme.com/product/magimix-light-green-improver/",
+    "title": "Magimix™ Light Green improver",
+    "image": "https://i0.wp.com/www.masterbakerme.com/wp-content/uploads/2025/01/B2B-15-MGX-Light-Green.png?fit=500%2C500&ssl=1",
+    "description": "",
+    "item_code": "",
+    "brand": "Lesaffre",
+    "weight": "10 kg",
+    "uom": "BAG",
+    "origin": "France"
+  },
+  {
+    "url": "https://www.masterbakerme.com/product/neropan-bread-darkener/",
+    "title": "Neropan Bread Darkener",
+    "image": "https://i0.wp.com/www.masterbakerme.com/wp-content/uploads/2025/01/Neropan.jpg?fit=500%2C500&ssl=1",
+    "description": "",
+    "item_code": "",
+    "brand": "Dobele",
+    "weight": "25 kg",
+    "uom": "Bag",
+    "origin": "Latvia"
+  },
+  {
+    "url": "https://www.masterbakerme.com/product/vx-2-vd/",
+    "title": "VX-2-VD Bread Improver",
+    "image": "https://i0.wp.com/www.masterbakerme.com/wp-content/uploads/2019/11/VX-2-VD.jpg?fit=500%2C500&ssl=1",
+    "description": "",
+    "item_code": "",
+    "brand": "CSM Ingredients",
+    "weight": "25 kg",
+    "uom": "BAG",
+    "origin": "Germany"
+  },
+  {
+    "url": "https://www.masterbakerme.com/product/bolivia-lait-de-terroir-45-60h-couverture/",
+    "title": "Bolivia Lait de terroir 45%-60h Couverture",
+    "image": "https://i0.wp.com/www.masterbakerme.com/wp-content/uploads/2025/03/Bolivia-Lait-de-terroir-45-60h.jpg?fit=500%2C500&ssl=1",
+    "description": "",
+    "item_code": "15000068",
+    "brand": "Felchlin",
+    "weight": "6KG",
+    "uom": "CTN",
+    "origin": "Switzerland"
+  },
+  {
+    "url": "https://www.masterbakerme.com/product/brownie-mix/",
+    "title": "Brownie Mix",
+    "image": "https://i0.wp.com/www.masterbakerme.com/wp-content/uploads/2019/11/Brownie-Mix.jpg?fit=500%2C500&ssl=1",
+    "description": "",
+    "item_code": "",
+    "brand": "Dawn",
+    "weight": "22.68 KG",
+    "uom": "BAG",
+    "origin": "USA"
+  },
+  {
+    "url": "https://www.masterbakerme.com/product/caramel-gourmet-sauce/",
+    "title": "Caramel Gourmet Sauce",
+    "image": "https://i0.wp.com/www.masterbakerme.com/wp-content/uploads/2025/03/Fabbri-Caramel-Gourmet-Sauce.jpg?fit=500%2C500&ssl=1",
+    "description": "",
+    "item_code": "",
+    "brand": "Fabbri",
+    "weight": "950 gram",
+    "uom": "BOTTLE",
+    "origin": "Italy"
+  }
+]
