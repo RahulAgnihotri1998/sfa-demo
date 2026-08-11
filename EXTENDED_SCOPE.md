@@ -1,43 +1,46 @@
 # SFA Platform — Extended Scope Technical Architecture & Implementation Plan
 
-> **Document Version:** 1.0.0  
+> **Document Version:** 2.0.0 (Refined per Technical & Scope Review)  
 > **Status:** Approved Technical Specification  
-> **Scope:** 12 Extended Scope Deliverables  
 > **Target Audience:** Engineering Leads, Solution Architects, Project Managers, Client Technical Stakeholders  
 
 ---
 
 ## Table of Contents
 
-1. [Executive Summary & System Architecture](#1-executive-summary--system-architecture)
+1. [Executive Summary & Scope Refinements](#1-executive-summary--scope-refinements)
 2. [End-to-End System Architecture Diagram](#2-end-to-end-system-architecture-diagram)
-3. [Detailed Build Specifications for 12 Extended Scope Items](#3-detailed-build-specifications-for-12-extended-scope-items)
-   - [Item 1: Visit Time Scheduling (alongside Date Scheduling)](#item-1-visit-time-scheduling-alongside-date-scheduling)
-   - [Item 2: Geo-Fencing Controls & Visit Compliance Tracking](#item-2-geo-fencing-controls--visit-compliance-tracking)
-   - [Item 3: Customer 360 Insights Panel](#item-3-customer-360-insights-panel)
+3. [Refined Build Specifications](#3-refined-build-specifications)
+   - [Item 1: Visit Time Scheduling & In-Store Product Audit Form](#item-1-visit-time-scheduling--in-store-product-audit-form)
+   - [Item 2: Geo-Fencing Controls & Compliance Mechanisms](#item-2-geo-fencing-controls--compliance-mechanisms)
+   - [Item 3: Customer 360 Insights Panel & Slow-Moving Stock Metrics](#item-3-customer-360-insights-panel--slow-moving-stock-metrics)
    - [Item 4: Enhanced Forecasting Engine (SKU-Level & Rep Performance)](#item-4-enhanced-forecasting-engine-sku-level--rep-performance)
-   - [Item 5: Algorithmic Transparency: AI/ML Forecasting & Recommendation Logic](#item-5-algorithmic-transparency-aiml-forecasting--recommendation-logic)
-   - [Item 6: “Next Best Action” (NBA) Recommendation Engine](#item-6-next-best-action-nba-recommendation-engine)
+   - [Item 5: Algorithmic Logic Specification (Forecasting & Recommendation Models)](#item-5-algorithmic-logic-specification-forecasting--recommendation-models)
+   - [Item 6: “Next Best Action” (NBA) Engine (Baseline Architecture & v2 Path)](#item-6-next-best-action-nba-engine-baseline-architecture--v2-path)
    - [Item 7: Market Basket Analysis & Cross-Selling Microservice](#item-7-market-basket-analysis--cross-selling-microservice)
    - [Item 8: Competitor Intelligence Capture & Reporting](#item-8-competitor-intelligence-capture--reporting)
-   - [Item 9: Two-Way Sage X3 Integration for Approvals & Live Updates](#item-9-two-way-sage-x3-integration-for-approvals--live-updates)
+   - [Item 9: Two-Way Sage X3 Integration (Webhooks & Status Write-Back)](#item-9-two-way-sage-x3-integration-webhooks--status-write-back)
    - [Item 10: Enhanced KPI Dashboards, Leaderboards & Gamification](#item-10-enhanced-kpi-dashboards-leaderboards--gamification)
-   - [Item 11: Customer Hierarchy & Parent/Child Account Roll-Up](#item-11-customer-hierarchy--parentchild-account-roll-up)
-   - [Item 12: Map Intelligence & Nearby Lead Generation (Google Places)](#item-12-map-intelligence--nearby-lead-generation-google-places)
+   - [Item 11: Customer Hierarchy in Visit & Order Workflows](#item-11-customer-hierarchy-in-visit--order-workflows)
+   - [Item 12: Lead Management Scope Re-evaluation](#item-12-lead-management-scope-re-evaluation)
 4. [Consolidated Database Schema & Data Models](#4-consolidated-database-schema--data-models)
-5. [Program Delivery Plan, Phases & Complexity Matrix](#5-program-delivery-plan-phases--complexity-matrix)
+5. [Program Delivery Plan & Complexity Matrix](#5-program-delivery-plan--complexity-matrix)
 6. [Client Integration Prerequisites & Infrastructure Checklist](#6-client-integration-prerequisites--infrastructure-checklist)
 
 ---
 
-## 1. Executive Summary & System Architecture
+## 1. Executive Summary & Scope Refinements
 
-This specification document outlines the concrete implementation approach for the **12 Extended Scope Items** of the Sales Force Automation (SFA) platform. It provides a blueprint for engineering teams and client stakeholders, transitioning from high-level feasibility ratings to architectural definitions, data models, API contracts, and phased execution roadmaps.
+This specification document reflects the updated scope decisions and architectural refinements for the Sales Force Automation (SFA) platform:
 
-### Architectural Tenets
-- **Hybrid Core Backend & Specialized AI Microservices:** The platform retains the existing primary transactional backend (Laravel / Node.js Next.js) while introducing an isolated **Python Analytics & ML Microservice** (FastAPI, Pandas, mlxtend, Scikit-learn) for heavy computational tasks like Market Basket Analysis (FP-Growth) and SKU-level variance modeling.
-- **Asynchronous & Resilient ERP Integration:** Two-way integration with **Sage X3** is decoupled via job queues (Redis/BullMQ or Laravel Queues) with exponential backoff and idempotency keys to prevent ERP rate-limiting or downtime from disrupting field sales operations.
-- **Offline-First Mobile Capability:** Mobile workflows (Geo-checkin, visit scheduling, competitor intelligence, and cached Customer 360 data) support local caching with background synchronization upon network reconnection.
+1. **Customer Visits:** Added a structured **Product Audit & Stock Check form** directly into the active visit workflow.
+2. **Customer Insights:** Explicitly detailed **Slow-Moving Stock** metrics, dormancy formulas, and inventory velocity indicators.
+3. **AI/ML Forecasting Documentation:** Streamlined to focus strictly on mathematical formulations, error metrics, and algorithmic logic.
+4. **Two-Way Integration:** Narrowed strictly to **Sage X3 webhook reception and status write-back** execution.
+5. **Geo-Fencing:** Focused on configurable threshold **control mechanisms**, override logging, and compliance audits.
+6. **Customer Hierarchy:** Embedded across both **Visit Planning** and **Order Placement** workflows with parent/child credit consolidation.
+7. **Next Best Action:** Explicitly documented as **already present** in the baseline platform (rule-based), outlining the optional v2 ML upgrade path.
+8. **Lead Generation:** Removed external third-party API dependencies (Google Places exploratory module re-evaluated to focus on native pipeline lead management).
 
 ---
 
@@ -46,217 +49,185 @@ This specification document outlines the concrete implementation approach for th
 ```mermaid
 flowchart TB
     subgraph Client_Layer["Client Applications Layer"]
-        MobileApp["Mobile SFA App (React Native / PWA)\n• Geo-Fence & GPS\n• Offline Visit Check-in\n• Barcode/Photo Upload"]
-        WebPortal["Web Portal (Next.js / React)\n• Manager Dashboard\n• Customer 360\n• Forecasting & Approvals"]
+        MobileApp["Mobile SFA App (React Native / PWA)\n• Geo-Fence Controls & GPS\n• Visit Product Audit Form\n• Hierarchy in Visit & Order"]
+        WebPortal["Web Portal (Next.js / React)\n• Manager Dashboard & Audits\n• Customer 360 & Slow-Moving Stock\n• Webhook Monitoring"]
     end
 
     subgraph API_Gateway["API Gateway & Real-Time Layer"]
-        Gateway["API Gateway / Router\n• Auth & RBAC (JWT)\n• Rate Limiting"]
-        FCM["Firebase Cloud Messaging (FCM)\n• Push Notifications\n• Schedule & Badge Alerts"]
+        Gateway["API Gateway / Router\n• Auth & RBAC (JWT)\n• Webhook Ingress"]
+        FCM["Firebase Cloud Messaging (FCM)\n• Push Notifications & Visit Reminders"]
     end
 
     subgraph Core_Backend["Core Application Backend (Laravel / Node.js)"]
-        VisitEngine["Visit & Scheduling Engine"]
-        ApprovalEngine["Two-Way Approval Workflow"]
-        Customer360["Customer Insights Aggregator"]
-        HierarchyEngine["Customer Hierarchy Engine"]
+        VisitEngine["Visit Execution & Product Audit Engine"]
+        WebhookHandler["Sage X3 Webhook & Status Write-Back Handler"]
+        Customer360["Customer 360 & Slow-Moving Stock Aggregator"]
+        HierarchyEngine["Customer Hierarchy & Multi-Tier Credit Engine"]
+        NBAEngine["Baseline Next Best Action Engine (Built-in)"]
         GamificationEngine["Gamification & Leaderboard Engine"]
         QueueWorker["Background Job Worker (Queue/Cron)"]
     end
 
     subgraph AI_Analytics_Service["Python Analytics Microservice (FastAPI)"]
-        MarketBasket["Market Basket Service\n(Apriori / FP-Growth)"]
-        ForecastEngine["Forecasting & Variance Engine\n(Exponential Smoothing / Holt-Winters)"]
-        NBARecommend["Next Best Action Engine\n(Rule Engine v1 -> ML v2)"]
+        MarketBasket["Market Basket Service\n(FP-Growth / Association Rules)"]
+        ForecastEngine["Forecasting & Variance Engine\n(Holt-Winters / WMAPE)"]
     end
 
     subgraph Data_Storage["Data Storage Layer"]
-        Postgres[(Primary Relational DB\nPostgreSQL)]
-        RedisCache[(Redis Cache & Message Broker)]
-        CloudStorage[(Cloud Object Storage\nS3 / Azure Blob\n• Competitor Photos & Docs)]
+        Postgres[(Primary Database\nPostgreSQL)]
+        RedisCache[(Redis Cache & Webhook Idempotency)]
+        CloudStorage[(Cloud Object Storage\nS3 / Azure Blob\n• Competitor Photos & Assets)]
     end
 
     subgraph External_Services["External Services & ERP Integration"]
-        SageX3["Sage X3 ERP\n• AR / Open Items API\n• Sales History & Batch Expiry\n• Webhook Approval Write-back"]
-        GoogleMaps["Google Maps Platform\n• Geolocation SDK\n• Google Places API (Nearby Leads)"]
+        SageX3["Sage X3 ERP\n• Outbound Approval Webhooks\n• Inbound Status Write-Back"]
     end
 
     MobileApp --> Gateway
     WebPortal --> Gateway
-    Gateway --> CoreBackend
-    CoreBackend --> Postgres
-    CoreBackend --> RedisCache
-    CoreBackend --> CloudStorage
-    CoreBackend --> FCM
+    Gateway --> Core_Backend
+    Core_Backend --> Postgres
+    Core_Backend --> RedisCache
+    Core_Backend --> CloudStorage
+    Core_Backend --> FCM
 
     QueueWorker --> AI_Analytics_Service
     AI_Analytics_Service --> RedisCache
     AI_Analytics_Service --> Postgres
 
-    CoreBackend <--> SageX3
-    MobileApp <--> GoogleMaps
-    CoreBackend <--> GoogleMaps
+    SageX3 <-->|Webhooks & Write-Back| Core_Backend
 ```
 
 ---
 
-## 3. Detailed Build Specifications for 12 Extended Scope Items
+## 3. Refined Build Specifications
 
 ---
 
-### Item 1: Visit Time Scheduling (alongside Date Scheduling)
+### Item 1: Visit Time Scheduling & In-Store Product Audit Form
 **Complexity:** `Low` | **Phase:** Phase 1 | **Target Platforms:** Web & Mobile
 
 #### 1.1 Objective
-Extend existing date-based visit planning to support discrete time slots (e.g. 10:00 AM – 11:30 AM), automatic conflict detection across customer visits, and automated push notifications ahead of scheduled visits.
+1. Extend visit scheduling from day-only to discrete time windows with rep conflict checking and automated FCM reminder notifications.
+2. Embed an interactive **In-Store Product Audit Form** directly inside the active visit workflow.
 
-#### 1.2 Data Model Changes
-Add `scheduled_time_start`, `scheduled_time_end`, and `duration_minutes` to the `visits` table:
-```sql
-ALTER TABLE visits 
-ADD COLUMN IF NOT EXISTS scheduled_time_start TIME,
-ADD COLUMN IF NOT EXISTS scheduled_time_end TIME,
-ADD COLUMN IF NOT EXISTS duration_minutes INTEGER DEFAULT 60,
-ADD COLUMN IF NOT EXISTS reminder_sent BOOLEAN DEFAULT FALSE;
+#### 1.2 Visit Product Audit Form Workflow
+During an active visit, sales reps complete an in-store shelf audit:
+- **Product Selection:** Search/scan products from the catalog.
+- **Data Captured per Product:**
+  - `on_shelf_qty` (Current units observed on shelf).
+  - `backstore_qty` (Units observed in storeroom).
+  - `is_out_of_stock` (Boolean flag).
+  - `shelf_price_observed` (Retail price at customer store).
+  - `facing_count` (Number of visible shelf facings).
+  - `audit_notes` (e.g. *Damaged packaging*, *Promotional stand misplaced*).
+- **Direct Order Handoff:** Rep can tap **"Add Depleted Items to Order"** to pre-populate an order with recommended restock quantities based on audit deficits.
 
-CREATE INDEX idx_visits_rep_datetime ON visits(rep_id, scheduled_date, scheduled_time_start);
-```
-
-#### 1.3 Conflict Detection Algorithm
-Before inserting or updating a visit record:
-```
-Overlap Condition:
-(new_start < existing_end) AND (new_end > existing_start)
-WHERE rep_id = :rep_id 
-  AND scheduled_date = :scheduled_date 
-  AND id != :current_visit_id 
-  AND status NOT IN ('cancelled', 'completed')
-```
-- If conflict is detected, the API returns `409 Conflict` with conflicting visit details.
-- Reps receive an override prompt with mandatory manager justification if overlapping visits are intentional.
-
-#### 1.4 Push Notification Pipeline
-- A cron job (`check-upcoming-visits`) runs every 5 minutes on the backend worker.
-- Queries visits where `scheduled_date = CURRENT_DATE` and `scheduled_time_start BETWEEN NOW() AND NOW() + INTERVAL '30 MINUTE'` and `reminder_sent = FALSE`.
-- Dispatches FCM push notification payload to the assigned representative's device token.
+#### 1.3 Time Scheduling & Conflict Logic
+- Add `scheduled_time_start`, `scheduled_time_end`, and `duration_minutes` to `visits`.
+- Conflict condition prevents overlapping visits for the same rep on the same date:
+  $$(t_{\text{new\_start}} < t_{\text{existing\_end}}) \land (t_{\text{new\_end}} > t_{\text{existing\_start}})$$
+- Background cron dispatches an FCM push reminder 30 minutes before `scheduled_time_start`.
 
 ---
 
-### Item 2: Geo-Fencing Controls & Visit Compliance Tracking
-**Complexity:** `Low` | **Phase:** Phase 1 | **Target Platforms:** Mobile (Native) & Web Manager Dashboard
+### Item 2: Geo-Fencing Controls & Compliance Mechanisms
+**Complexity:** `Low` | **Phase:** Phase 1 | **Target Platforms:** Mobile & Web Manager Portal
 
 #### 2.1 Objective
-Enhance radius-based check-in verification with configurable per-customer/territory radius thresholds, manager override audit logs, and a manager compliance dashboard.
+Implement rigorous control mechanisms around field check-ins to prevent fraudulent visits while providing clear audit trails for legitimate field exceptions.
 
-#### 2.2 Configurable Radius & Verification Logic
-- Default radius: `150 meters` (configurable per customer in `customers.geofence_radius_meters`).
-- Great-Circle Distance calculation using the **Haversine formula** (executed client-side for instant feedback, validated server-side upon check-in):
-$$d = 2r \arcsin \left( \sqrt{ \sin^2\left(\frac{\Delta \phi}{2}\right) + \cos(\phi_1)\cos(\phi_2)\sin^2\left(\frac{\Delta \lambda}{2}\right) } \right)$$
-
-#### 2.3 Geo-Fence Override & Audit Trail
-When check-in distance exceeds `geofence_radius_meters`:
-1. Mobile UI prompts for an **Override Reason** (e.g. *Client Meeting at Alternate Office*, *GPS Inaccuracy*, *Large Factory Campus*).
-2. The record is flagged with `is_geofence_compliant = FALSE`.
-3. Check-in event is recorded in `visit_compliance_logs` with GPS coordinates, distance deviation in meters, and justification.
-4. Managers view these deviations in the **Compliance Audit Dashboard** with map pin comparisons (Customer Pin vs. Rep Actual Check-in Pin).
+#### 2.2 Control Mechanisms
+1. **Configurable Radius per Account:** Stored in `customers.geofence_radius_meters` (Default: $150\,\text{m}$, adjustable for large campuses or rural locations).
+2. **Server-Side Distance Validation:** Haversine formula calculation executes on check-in submission; client cannot spoof compliance without coordinate validation.
+3. **Mandatory Override Workflow:**
+   - If distance $> \text{geofence\_radius\_meters}$, the check-in is blocked until the rep selects an **Override Reason** from a structured dropdown (*Meeting at client warehouse*, *Weak GPS signal*, *Client changed meeting location*).
+   - Check-in is permanently marked `is_geofence_compliant = FALSE`.
+4. **Manager Compliance Dashboard:** Filterable view highlighting all non-compliant check-ins with distance deviation in meters and submitted override justifications.
 
 ---
 
-### Item 3: Customer 360 Insights Panel
+### Item 3: Customer 360 Insights Panel & Slow-Moving Stock Metrics
 **Complexity:** `Medium` | **Phase:** Phase 2 | **Target Platforms:** Web & Mobile
 
 #### 3.1 Objective
-Provide sales reps and managers with a real-time, aggregated Customer 360 panel directly on the customer detail view, synthesizing Sage X3 data without burdening the ERP with live queries.
+Provide reps with an instant Customer 360 overview, placing strong analytical emphasis on **Slow-Moving Stock identification** and payment risk metrics.
 
-#### 3.2 Key Data Points & Ingestion Cadence
-| Insight Metric | Source Scope | Sync Cadence | Caching Strategy |
-| :--- | :--- | :--- | :--- |
-| **AR Outstanding & Overdue Aging** | Sage X3 AR / Open Items API | Daily / Hourly batch | Redis Key: `cust:ar:{id}` (TTL: 6h) |
-| **Buying History & Order Frequency** | Sage X3 Sales History API | Nightly batch | Stored in `customer_sales_summary` |
-| **Frequent SKU Reorder Matrix** | Aggregated Order Items | Weekly computation | Stored in `customer_top_products` |
-| **Lot/Batch Expiry Alerts** | Sage X3 Lot Master API | Daily batch | Threshold: `< 45 days to expiry` |
-| **Slow-Moving Stock Alerts** | Stock Movement API | Weekly batch | Threshold: `No re-order in > 60 days` |
+#### 3.2 Slow-Moving Stock & Inventory Metrics
+The panel computes and displays:
+- **Dormant SKU Alert:** Products previously ordered by this customer that have had **no reorder within $1.5\times$ their historical order cycle** (e.g., historical cadence is 30 days $\rightarrow$ flagged if inactive for $> 45$ days).
+- **Run-Rate Depletion Estimator:** Estimated days of remaining inventory based on average monthly consumption:
+  $$\text{Days of Supply Remaining} = \frac{\text{Last Order Quantity}}{\text{Average Daily Consumption Rate}}$$
+- **Stock Velocity Index:** Categorizes customer SKUs into *Fast-Moving*, *Moderate*, and *Slow-Moving/At-Risk*.
+- **Warehouse Expiry Warnings:** Highlights products in company inventory expiring within $< 45$ days that match the customer's purchase profile for targeted discounting.
 
-#### 3.3 UI Component Specification
-- **Summary Cards:** Total Outstanding Balance, Credit Limit Utilization %, Overdue (> 30/60/90 days), Last Order Date.
-- **Smart Tags:** `[🚨 Overdue Payment]`, `[⚠️ Expiring Stock in Warehouse]`, `[🔄 Reorder Due: Fabbri Syrup]`.
-- **Top 5 Reordered Products Table:** Product SKU, Last Ordered Quantity, Average Order Frequency (days), Recommended Reorder Date.
+#### 3.3 Financial & Credit Insights
+- Total Outstanding Balance vs. Approved Credit Limit.
+- Overdue Aging Buckets ($1\text{–}30$, $31\text{–}60$, $61\text{–}90$, $90+\,\text{days}$).
+- Average Payment Turnaround (DSO — Days Sales Outstanding).
 
 ---
 
 ### Item 4: Enhanced Forecasting Engine (SKU-Level & Rep Performance)
-**Complexity:** `High` | **Phase:** Phase 5 | **Target Platforms:** Web Analytics & Manager Portal
+**Complexity:** `High` | **Phase:** Phase 5 | **Target Platforms:** Web Analytics
 
 #### 4.1 Objective
-Upgrade high-level aggregate forecasting into SKU-level granular forecasting with variance tracking, historical accuracy scoring over time, and a salesperson forecast-performance scorecard.
+Deliver SKU-level granularity for sales forecasting, automated variance computation against actual sales, and salesperson forecast reliability scorecards.
 
-#### 4.2 Calculation Engine & Variance Analysis
-- **Forecast Baseline:** Ingested from Netstock / Sage X3 or calculated via seasonal exponential smoothing.
-- **Variance Metric Calculation:**
-$$\text{Variance \%} = \frac{\text{Actual Sales} - \text{Committed Forecast}}{\text{Committed Forecast}} \times 100$$
-$$\text{Accuracy Score (WMAPE)} = 100 - \left( \frac{\sum |\text{Actual}_i - \text{Forecast}_i|}{\sum \text{Actual}_i} \times 100 \right)$$
-- **Granular Dimensions:** SKU, Product Category, Territory, Sales Representative, Time Bucket (Monthly / Quarterly).
-
-#### 4.3 Salesperson Performance Scorecard
-- Historical Accuracy Trend (trailing 6 months rolling accuracy chart).
-- Forecast Bias Indicator: Categorizes reps as *Over-Optimistic* (Consistently Forecasts > Actual) or *Conservative* (Consistently Forecasts < Actual).
-- Target Achievement vs. Forecast Commitment scatter matrix.
+#### 4.2 Variance & Accuracy Formulation
+- **Variance Percentage:**
+  $$\text{Variance \%} = \frac{\text{Actual Units Sold} - \text{Committed Forecast Units}}{\text{Committed Forecast Units}} \times 100$$
+- **Forecast Accuracy (Weighted Mean Absolute Percentage Error — WMAPE):**
+  $$\text{WMAPE Accuracy \%} = 100 \times \left(1 - \frac{\sum_{i=1}^{N} |\text{Actual}_i - \text{Forecast}_i|}{\sum_{i=1}^{N} \text{Actual}_i}\right)$$
+- **Scorecard Metrics:** 6-month trailing rolling accuracy %, forecast bias rating (*Under-Forecasting*, *Accurate*, *Over-Forecasting*), and territory quota attainment.
 
 ---
 
-### Item 5: Algorithmic Transparency: AI/ML Forecasting & Recommendation Logic
-**Complexity:** `Documentation & Framework` | **Phase:** Phase 3 & 5
+### Item 5: Algorithmic Logic Specification (Forecasting & Recommendation Models)
+**Complexity:** `Technical Documentation` | **Phase:** Phase 3 & 5
 
 #### 5.1 Objective
-Provide full transparency and auditability for all automated suggestions and forecasts, building trust among sales reps, managers, and executive leadership.
+Provide clear, strict mathematical and algorithmic definitions for all automated predictive and recommendation components.
 
-#### 5.2 Algorithmic Logic Breakdown
-1. **Forecasting Transparency:**
-   - *Phase 1 Baseline:* Triple Exponential Smoothing (Holt-Winters) handling trend and 12-month seasonality.
-   - *Confidence Interval Calculation:* Upper/Lower 80% & 95% prediction intervals based on root-mean-square error (RMSE).
-   - Every forecast UI element includes a **"Why this number?"** tooltip displaying: historical weightings, trend multiplier, and base data points.
-2. **Recommendation Reason Badges:**
-   - Every recommendation is tagged with its rule origin:
-     - `[Rule: Inactivity]` — Customer has not purchased product X in 35 days (historical cycle: 28 days).
-     - `[Rule: High Margin Promotion]` — Focus campaign product with > 25% gross margin.
-     - `[Model: Affinity]` — Market basket affinity score > 0.65 with current cart items.
+#### 5.2 Mathematical Formulation of Algorithms
+
+#### 1. Baseline Forecasting: Holt-Winters Exponential Smoothing
+For monthly SKU sales series $Y_t$ with trend and additive seasonality ($L = 12$ months):
+- **Level Equation:**
+  $$\ell_t = \alpha (Y_t - s_{t-L}) + (1 - \alpha)(\ell_{t-1} + b_{t-1})$$
+- **Trend Equation:**
+  $$b_t = \beta (\ell_t - \ell_{t-1}) + (1 - \beta)b_{t-1}$$
+- **Seasonal Equation:**
+  $$s_t = \gamma (Y_t - \ell_t) + (1 - \gamma)s_{t-L}$$
+- **$h$-Step Forecast:**
+  $$\hat{Y}_{t+h} = \ell_t + h b_t + s_{t+h-L}$$
+- Smoothing parameters ($\alpha, \beta, \gamma \in [0, 1]$) optimized via bounded Nelder-Mead minimization of Mean Squared Error (MSE).
+
+#### 2. Association Rule Mining: FP-Growth
+Given transaction database $D$, items are mapped to a Frequent Pattern Tree (FP-Tree):
+- **Support:** $\text{supp}(X \Rightarrow Y) = \frac{\sigma(X \cup Y)}{|D|}$
+- **Confidence:** $\text{conf}(X \Rightarrow Y) = \frac{\sigma(X \cup Y)}{\sigma(X)}$
+- **Lift:** $\text{lift}(X \Rightarrow Y) = \frac{\text{conf}(X \Rightarrow Y)}{\text{supp}(Y)}$
+- Rules selected where $\text{supp} \ge 0.02$, $\text{conf} \ge 0.40$, and $\text{lift} > 1.25$.
+
+#### 3. Prediction Confidence Intervals
+Prediction interval at confidence level $(1 - \delta)$ for forecast horizon $h$:
+$$\hat{Y}_{t+h} \pm z_{1-\delta/2} \cdot \hat{\sigma} \sqrt{1 + \sum_{j=1}^{h-1} \theta_j^2}$$
+where $\hat{\sigma}$ is the residual standard error.
 
 ---
 
-### Item 6: “Next Best Action” (NBA) Recommendation Engine
-**Complexity:** `High` | **Phase:** Phase 5 | **Target Platforms:** Mobile Visit Workflow & Order Creation
+### Item 6: “Next Best Action” (NBA) Engine (Baseline Architecture & v2 Path)
+**Complexity:** `High (v2)` / `Baseline Already Present (v1)` | **Phase:** v1 Active in Core, v2 in Phase 5
 
-#### 6.1 Objective
-Deliver proactive, ranked actionable suggestions to sales representatives before and during customer visits to maximize order value and customer retention.
+#### 6.1 Status: Baseline Functionality Already Present
+The platform already possesses a built-in, operational deterministic rule-based Next Best Action engine. It evaluates customer telemetry on every visit start and order creation:
+- **Rule A (Restock Prompt):** Triggers when product reorder cycle threshold is exceeded ($> 1.2\times$ average purchase interval).
+- **Rule B (Promotional Campaign Pitch):** Surfaces active head-office promotions for categories frequently ordered by the customer.
+- **Rule C (Credit / Payment Alert):** Flags accounts exceeding 80% credit limit or holding invoices past 30 days overdue.
 
-#### 6.2 Two-Stage Evolution Architecture
-
-```mermaid
-flowchart LR
-    subgraph Stage1["v1: Deterministic Rule Engine"]
-        R1["Rule 1: Churn Risk\n(No order in 45 days)"]
-        R2["Rule 2: Restock Cycle\n(Stock depleted based on run-rate)"]
-        R3["Rule 3: Promo Cross-Sell\n(Active campaign & matching category)"]
-        Score1["Weighted Score Aggregator"]
-        R1 & R2 & R3 --> Score1
-    end
-
-    subgraph Stage2["v2: ML Scoring Pipeline (6+ Months Data)"]
-        HistData[("Historical Transaction\n& Visit Logs")]
-        ModelTrain["Gradient Boosted Classifier\n(XGBoost / LightGBM)"]
-        Score2["Propensity to Buy Score\n[0.00 - 1.00]"]
-        HistData --> ModelTrain --> Score2
-    end
-
-    Score1 --> Output["Surfaced in Rep Mobile UI:\nRanked Action Cards"]
-    Score2 --> Output
-```
-
-#### 6.3 Rep Mobile UI Interaction
-- Displayed at the top of the **Visit Execution Screen**:
-  - **Action Card 1:** *Reorder Alert: Dawn Chocolate Frosting (Customer runs out in ~4 days).* `[One-Tap Add to Order]`
-  - **Action Card 2:** *Promo Pitch: Introduce Amarena Fabbri Sauces (15% Campaign Discount).* `[View Pitch Script & Samples]`
-  - **Action Card 3:** *Payment Follow-up: Invoice #INV-2024-88 is 12 days overdue.* `[View Invoice PDF]`
+#### 6.2 Future v2 Scoring Upgrade Path
+The system is architected so that in Phase 5, once 6+ months of historical interaction data is collected, a machine learning propensity model (Gradient Boosted Decision Trees / LightGBM) can output purchase probabilities without modifying the frontend card layout or rep workflow.
 
 ---
 
@@ -264,177 +235,94 @@ flowchart LR
 **Complexity:** `High` | **Phase:** Phase 5 | **Architecture:** Python Analytics Microservice
 
 #### 7.1 Objective
-Identify multi-product purchase patterns ("Customers who bought item A also frequently bought item B and C") and surface real-time cross-sell recommendations during order entry.
+Run high-performance association rule mining over historical invoice line items to suggest relevant cross-sell products in real-time during order entry.
 
-#### 7.2 Microservice Architecture & Algorithm
-- **Framework:** Python 3.11 + FastAPI + `mlxtend` + Redis.
-- **Algorithm:** **FP-Growth (Frequent Pattern Growth)** — chosen over Apriori for $O(N)$ efficiency with large order-line histories.
-- **Metrics Tracked:**
-  - **Support:** Proportion of transactions containing $\{X, Y\}$.
-  - **Confidence:** Probability of purchasing $Y$ given $X$: $P(Y|X)$.
-  - **Lift:** Strength of the rule over random coincidence: $\text{Lift}(X \rightarrow Y) = \frac{\text{Confidence}(X \rightarrow Y)}{\text{Support}(Y)}$. (Rules filtered for $\text{Lift} > 1.25$).
-
-#### 7.3 Scheduled Pipeline & API Endpoint
-```python
-# FastAPI Microservice Endpoint Definition
-@app.get("/api/v1/recommendations/cross-sell")
-async def get_cross_sell_recommendations(product_ids: List[str], limit: int = 3):
-    """
-    Returns high-lift cross-sell suggestions based on current basket contents.
-    """
-    cached_rules = await redis_client.get(f"mba:rules:{','.join(sorted(product_ids))}")
-    if cached_rules:
-        return json.loads(cached_rules)
-    
-    recommendations = mba_engine.compute_recommendations(product_ids, top_n=limit)
-    return recommendations
-```
+#### 7.2 Microservice Contract
+- **Service:** Python FastAPI running in isolated container.
+- **Computation Cadence:** Weekly batch re-indexing of order lines into FP-Tree, storing active rule associations in Redis.
+- **API Endpoint:** `POST /api/v1/recommendations/cross-sell`
+  - Input: `{"current_cart_skus": ["FB-950-01", "DW-600-02"], "customer_id": "..."}`
+  - Output: Ranked list of recommended SKUs with calculated confidence and lift scores.
 
 ---
 
 ### Item 8: Competitor Intelligence Capture & Reporting
-**Complexity:** `Low` | **Phase:** Phase 2 | **Target Platforms:** Mobile Visit Closeout & Web BI Reports
+**Complexity:** `Low` | **Phase:** Phase 2 | **Target Platforms:** Mobile & Web
 
 #### 8.1 Objective
-Enable field reps to log competitor presence, product pricing, promotions, and shelf-share photos during store visits, feeding an executive competitor dashboard.
+Provide sales reps with a fast, structured form during store visits to capture competitor product presence, pricing, and shelf share with photo verification.
 
-#### 8.2 Mobile Workflow & Photo Upload Pipeline
-1. During the **Visit Summary / Checkout** step, reps access an optional **Competitor Intel** tab.
-2. Rep selects Competitor Brand (from dropdown or adds new), Competitor SKU/Description, Observed Shelf Price, Active Promotions (e.g. *Buy 2 Get 1 Free*), and Estimated Shelf Share %.
-3. Rep snaps a shelf photo $\rightarrow$ Image is compressed on-device ($< 1\,\text{MB}$) $\rightarrow$ Uploaded via direct pre-signed URL to S3 / Azure Blob Storage.
-4. Submission stored in `competitor_intelligence` table.
-
-#### 8.3 Aggregation & BI Reporting
-- **Territory Price Comparison Matrix:** Client SKU Price vs. Average Competitor Shelf Price by region.
-- **Competitor Activity Heatmap:** Identifies areas where competitors are running aggressive promotional campaigns.
+#### 8.2 Feature Scope
+- **Mobile Visit Form:** Competitor brand, product category, observed shelf price (AED), promotional mechanics, shelf facing %, and camera photo capture.
+- **Storage:** Images compressed client-side ($< 1\,\text{MB}$) and uploaded directly to cloud object storage.
+- **Web Analytics:** Competitor pricing matrix by territory and brand market-share monitoring.
 
 ---
 
-### Item 9: Two-Way Sage X3 Integration for Approvals & Live Updates
+### Item 9: Two-Way Sage X3 Integration (Webhooks & Status Write-Back)
 **Complexity:** `Medium` | **Phase:** Phase 3 | **Target Platforms:** Core Backend & ERP Middleware
 
-#### 9.1 Objective
-Establish bi-directional synchronization between the SFA platform and Sage X3: approval requests raised in the SFA app write into Sage X3, while ERP status modifications trigger real-time updates back in the SFA app.
-
-#### 9.2 Bi-Directional Sequence Flow
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Rep as Sales Representative
-    participant App as SFA Web / Mobile
-    participant Backend as SFA Core Backend
-    participant Queue as Redis Sync Queue
-    participant Sage as Sage X3 ERP
-    actor Approver as Sales Director (Sage X3)
-
-    Rep->>App: Submits Special Discount Request (20%)
-    App->>Backend: POST /api/approvals (discount_requests)
-    Backend->>Queue: Enqueue "DISCOUNT_REQUEST_CREATED" Job
-    Queue->>Sage: POST /api/v1/workflow/approval-requests (X3 Schema)
-    Sage-->>Queue: 201 Created (X3_Approval_ID: "X3-APP-9982")
-    Queue->>Backend: Update discount_requests (status: 'pending_erp', x3_id)
-    
-    Note over Approver,Sage: Approver approves directly in Sage X3
-    Sage->>Backend: Webhook POST /api/webhooks/sage/approval-update\n{x3_id: "X3-APP-9982", status: "APPROVED"}
-    Backend->>Backend: Update discount_requests (status: 'approved')
-    Backend->>App: Push FCM Notification & WebSocket Update
-    App-->>Rep: Alert: "Discount Request Approved by Management"
-```
-
-#### 9.3 Resilience, Idempotency & Error Handling
-- **Idempotency Key:** Every request generated by SFA includes a UUID `idempotency_key` stored in Sage X3 custom tracking field to prevent duplicate order/discount creation.
-- **Dead Letter Queue (DLQ):** Failed sync jobs retry 5 times with exponential backoff ($2^n \times 30\,\text{s}$). If unresolved, an alert is sent to the system administrator dashboard.
+#### 9.1 Focused Scope: Webhooks & Status Write-Back
+To avoid unnecessary scope bloat and maintain high system reliability, this deliverable is strictly scoped to:
+1. **Inbound Webhook Receiver (`POST /api/webhooks/sage/status-update`):**
+   - Receives asynchronous event payloads from Sage X3 when order or discount approval statuses change (*APPROVED*, *REJECTED*, *AMENDED*, *INVOICED*).
+   - Validates webhook HMAC signature using shared secret `SAGE_WEBHOOK_SECRET`.
+   - Ensures idempotency via `erp_event_id` tracking in Redis.
+2. **Status Write-Back Execution:**
+   - Automatically updates SFA `orders` and `discount_requests` tables.
+   - Instantly pushes real-time WebSocket updates to the web portal and FCM push alerts to the representative's mobile device.
+3. **Outbound Approval Dispatch:**
+   - Pushes pending discount requests from SFA into the Sage X3 workflow queue with retry backoff.
 
 ---
 
 ### Item 10: Enhanced KPI Dashboards, Leaderboards & Gamification
-**Complexity:** `Low` | **Phase:** Phase 2 | **Target Platforms:** Web Manager Portal & Mobile Rep Dashboard
+**Complexity:** `Low` | **Phase:** Phase 2 | **Target Platforms:** Web & Mobile
 
 #### 10.1 Objective
-Drive field sales motivation and manager visibility through real-time ranked leaderboards, achievement badges, milestone streaks, and customizable role-based scorecards.
+Motivate field teams and provide managers with operational visibility through gamified scorecards and dynamic leaderboards.
 
-#### 10.2 Gamification & Badge Mechanics
-- **Achievement Badges:**
-  - 🏆 *Century Club:* Log 100 completed visits in a month.
-  - 🎯 *Forecast Master:* Maintain $> 90\%$ forecast accuracy for 3 consecutive months.
-  - ⚡ *Lightning Checkout:* Complete 100% geo-compliant check-ins without overrides for 30 days.
-  - 📦 *Cross-Sell Champion:* Successfully pitch and close $\ge 15$ recommended basket items.
-- **Streak Tracker:** Tracks consecutive days with 100% planned visit completion.
-
-#### 10.3 Leaderboard Scoring Algorithm
-$$\text{Leaderboard Points} = (\text{Orders Count} \times 50) + (\text{Visit Compliance Rate} \times 200) + (\text{Sales Value (AED)} / 1000 \times 10) + (\text{New Leads Converted} \times 100)$$
+#### 10.2 Features
+- **Dynamic Leaderboards:** Ranked by revenue, visit completion rate, and new account conversions.
+- **Milestone Badges:** Automatically awarded upon reaching thresholds (e.g. *100 Compliant Visits*, *Zero Overdue Accounts in Territory*).
+- **Streak Tracker:** Encourages consecutive days of on-time, compliant visit execution.
 
 ---
 
-### Item 11: Customer Hierarchy & Parent/Child Account Roll-Up
+### Item 11: Customer Hierarchy in Visit & Order Workflows
 **Complexity:** `Medium` | **Phase:** Phase 3 | **Target Platforms:** Web & Mobile
 
 #### 11.1 Objective
-Support complex multi-tier customer structures (e.g. Corporate Headquarters $\rightarrow$ Regional Holding $\rightarrow$ Individual Branch/Outlet) with consolidated credit tracking, aggregated order volumes, and individual store delivery points.
+Expose multi-tier corporate hierarchies (Headquarters $\rightarrow$ Regional Offices $\rightarrow$ Retail Branches) directly within both the **Visit Planning** and **Order Entry** screens.
 
-#### 11.2 Hierarchy Schema & Roll-Up Logic
-```sql
-ALTER TABLE customers
-ADD COLUMN IF NOT EXISTS parent_id UUID REFERENCES customers(id) ON DELETE SET NULL,
-ADD COLUMN IF NOT EXISTS hierarchy_level VARCHAR(20) DEFAULT 'branch' CHECK (hierarchy_level IN ('headquarters', 'regional', 'branch')),
-ADD COLUMN IF NOT EXISTS credit_limit_scope VARCHAR(20) DEFAULT 'individual' CHECK (credit_limit_scope IN ('individual', 'consolidated_parent'));
-
-CREATE INDEX idx_customers_parent ON customers(parent_id);
-```
-
-#### 11.3 Consolidated Balance Calculation (Recursive SQL View)
-```sql
-CREATE OR REPLACE VIEW view_customer_hierarchy_rollups AS
-WITH RECURSIVE customer_tree AS (
-    SELECT id AS root_id, id, name, parent_id, credit_limit
-    FROM customers
-    WHERE parent_id IS NULL -- Roots / HQs
-    UNION ALL
-    SELECT ct.root_id, c.id, c.name, c.parent_id, c.credit_limit
-    FROM customers c
-    INNER JOIN customer_tree ct ON c.parent_id = ct.id
-)
-SELECT 
-    ct.root_id AS hq_customer_id,
-    COUNT(DISTINCT ct.id) AS total_outlets,
-    COALESCE(SUM(o.total_amount), 0) AS total_group_order_volume,
-    COALESCE(SUM(o.total_amount) FILTER (WHERE o.status = 'pending_payment'), 0) AS consolidated_outstanding_ar
-FROM customer_tree ct
-LEFT JOIN orders o ON o.customer_id = ct.id
-GROUP BY ct.root_id;
-```
+#### 11.2 Workflow Integrations
+1. **Visit Workflow:**
+   - Branch Selection: Reps can view all branch locations linked to a parent corporate entity.
+   - Group Context: Displays parent-level account status, key corporate account manager contacts, and centralized commercial agreements during the branch visit.
+2. **Order Workflow:**
+   - **Consolidated Credit Check:** Orders validate available credit against the **Parent Group Consolidated Credit Limit** or the individual branch limit depending on contract type.
+   - **Split Billing & Delivery:** Allows selecting Parent Entity as the Invoicing Customer and Individual Branch as the Delivery Destination Point.
 
 ---
 
-### Item 12: Map Intelligence & Nearby Lead Generation (Google Places)
-**Complexity:** `Medium` | **Phase:** Phase 5 | **Target Platforms:** Mobile Map & Rep Territory Planner
+### Item 12: Lead Management Scope Re-evaluation
+**Complexity:** `Re-evaluated (Native Pipeline Scope)` | **Phase:** Phase 2
 
-#### 12.1 Objective
-Empower field sales representatives to discover prospective new accounts (e.g. Bakeries, Cafes, Restaurants, Hotels) near their current GPS position or planned route using the **Google Places API (New)**.
-
-#### 12.2 Search & Filtering Workflow
-1. Rep opens **Map Intelligence View** on mobile.
-2. Selects search radius (e.g. $1\,\text{km}$, $3\,\text{km}$, $5\,\text{km}$) and business category keywords (`bakery`, `patisserie`, `hotel pastry kitchen`, `cafe`).
-3. App queries the backend proxy endpoint (`GET /api/leads/nearby?lat=...&lng=...&radius=...&type=bakery`).
-4. **De-duplication Check:** The backend matches Google Places `place_id` against existing `customers` and `leads` tables:
-   - Green Pin: Existing Active Customer.
-   - Blue Pin: Registered Lead in Pipeline.
-   - 🌟 Gold Star Pin: **Uncontacted Google Places Prospect**.
-5. Rep taps Gold Star $\rightarrow$ Clicks **"Convert to Lead"** $\rightarrow$ Pre-populates business name, address, phone number, and Google ratings into the lead creation form.
+#### 12.1 Scope Decision & Realignment
+- **Outcome of Scope Review:** External third-party Google Places API prospecting was flagged as an unvalidated/dummy dependency and has been **removed from the core delivery plan**.
+- **Realignment to Native Lead Pipeline:** The project scope focuses on **Native Lead Lifecycle Management** already in the codebase:
+  - Lead capture, qualification stages (Prospect $\rightarrow$ Contacted $\rightarrow$ Sample Provided $\rightarrow$ Converted), territory lead assignment, and one-click conversion of qualified leads into active customer accounts.
 
 ---
 
 ## 4. Consolidated Database Schema & Data Models
 
-Below is the complete database migration script for the new tables and attributes supporting all 12 items:
-
 ```sql
 -- ====================================================================
--- EXTENDED SCOPE CONSOLIDATED MIGRATIONS
+-- REFINED CONSOLIDATED EXTENDED SCOPE MIGRATIONS
 -- ====================================================================
 
--- 1. Visit Time & Compliance Extensions
+-- 1. Visit Extensions (Time Scheduling & Compliance Controls)
 ALTER TABLE visits 
 ADD COLUMN IF NOT EXISTS scheduled_time_start TIME,
 ADD COLUMN IF NOT EXISTS scheduled_time_end TIME,
@@ -444,13 +332,28 @@ ADD COLUMN IF NOT EXISTS check_in_distance_meters NUMERIC(10,2),
 ADD COLUMN IF NOT EXISTS geofence_override_reason TEXT,
 ADD COLUMN IF NOT EXISTS reminder_sent BOOLEAN DEFAULT FALSE;
 
-ALTER TABLE customers 
-ADD COLUMN IF NOT EXISTS geofence_radius_meters INTEGER DEFAULT 150,
-ADD COLUMN IF NOT EXISTS parent_id UUID REFERENCES customers(id) ON DELETE SET NULL,
-ADD COLUMN IF NOT EXISTS hierarchy_level VARCHAR(20) DEFAULT 'branch',
-ADD COLUMN IF NOT EXISTS credit_limit_scope VARCHAR(20) DEFAULT 'individual';
+-- 2. In-Store Product Audit Form Table (Inside Visit Workflow)
+CREATE TABLE IF NOT EXISTS visit_product_audits (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    visit_id UUID NOT NULL REFERENCES visits(id) ON DELETE CASCADE,
+    product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    on_shelf_qty INTEGER DEFAULT 0,
+    backstore_qty INTEGER DEFAULT 0,
+    is_out_of_stock BOOLEAN DEFAULT FALSE,
+    shelf_price_observed NUMERIC(10,2),
+    facing_count INTEGER DEFAULT 1,
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
--- 2. Competitor Intelligence Table
+-- 3. Customer Hierarchy & Configurable Geofence Radius
+ALTER TABLE customers 
+ADD COLUMN IF NOT EXISTS parent_id UUID REFERENCES customers(id) ON DELETE SET NULL,
+ADD COLUMN IF NOT EXISTS hierarchy_level VARCHAR(20) DEFAULT 'branch' CHECK (hierarchy_level IN ('headquarters', 'regional', 'branch')),
+ADD COLUMN IF NOT EXISTS credit_limit_scope VARCHAR(20) DEFAULT 'individual' CHECK (credit_limit_scope IN ('individual', 'consolidated_parent')),
+ADD COLUMN IF NOT EXISTS geofence_radius_meters INTEGER DEFAULT 150;
+
+-- 4. Competitor Intelligence Table
 CREATE TABLE IF NOT EXISTS competitor_intelligence (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     visit_id UUID REFERENCES visits(id) ON DELETE SET NULL,
@@ -468,12 +371,12 @@ CREATE TABLE IF NOT EXISTS competitor_intelligence (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 3. SKU-Level Forecast Variance Tracking
+-- 5. SKU-Level Forecast Variance Tracking
 CREATE TABLE IF NOT EXISTS forecast_sku_performance (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     rep_id UUID REFERENCES users(id) ON DELETE CASCADE,
     product_id UUID REFERENCES products(id) ON DELETE CASCADE,
-    period_month DATE NOT NULL, -- e.g. 2026-09-01
+    period_month DATE NOT NULL,
     committed_forecast_units INTEGER NOT NULL DEFAULT 0,
     actual_sold_units INTEGER NOT NULL DEFAULT 0,
     variance_units INTEGER GENERATED ALWAYS AS (actual_sold_units - committed_forecast_units) STORED,
@@ -483,18 +386,19 @@ CREATE TABLE IF NOT EXISTS forecast_sku_performance (
     UNIQUE(rep_id, product_id, period_month)
 );
 
--- 4. Market Basket Association Rules Cache Table
-CREATE TABLE IF NOT EXISTS market_basket_rules (
+-- 6. Two-Way Webhook Audit Log & Status Write-Back
+CREATE TABLE IF NOT EXISTS sage_webhook_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    antecedent_product_ids JSONB NOT NULL, -- e.g. ["uuid1", "uuid2"]
-    consequent_product_ids JSONB NOT NULL, -- e.g. ["uuid3"]
-    support NUMERIC(6,4) NOT NULL,
-    confidence NUMERIC(6,4) NOT NULL,
-    lift NUMERIC(6,4) NOT NULL,
-    computed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    event_id VARCHAR(100) UNIQUE NOT NULL,
+    event_type VARCHAR(50) NOT NULL, -- e.g. 'discount.approved', 'order.status_change'
+    entity_id UUID NOT NULL,
+    status VARCHAR(20) NOT NULL, -- 'PROCESSED', 'FAILED', 'DUPLICATE'
+    payload JSONB NOT NULL,
+    error_message TEXT,
+    processed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 5. Gamification & Rep Scorecards
+-- 7. Gamification & Rep Profiles
 CREATE TABLE IF NOT EXISTS rep_gamification_profiles (
     user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     current_points INTEGER DEFAULT 0,
@@ -512,51 +416,32 @@ CREATE TABLE IF NOT EXISTS rep_badges (
     badge_icon VARCHAR(50),
     awarded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-
--- 6. External ERP Sync Audit Log
-CREATE TABLE IF NOT EXISTS erp_sync_logs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    entity_type VARCHAR(50) NOT NULL, -- 'order', 'discount_request', 'customer'
-    entity_id UUID NOT NULL,
-    direction VARCHAR(10) NOT NULL CHECK (direction IN ('OUTBOUND', 'INBOUND')),
-    erp_reference_id VARCHAR(100),
-    status VARCHAR(20) NOT NULL, -- 'SUCCESS', 'FAILED', 'PENDING'
-    payload JSONB,
-    response_payload JSONB,
-    error_message TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
 ```
 
 ---
 
-## 5. Program Delivery Plan, Phases & Complexity Matrix
+## 5. Program Delivery Plan & Complexity Matrix
 
 | Phase | Scope Deliverables | Items Covered | Complexity | Dependencies |
 | :--- | :--- | :--- | :---: | :--- |
-| **Phase 1** | Core Logistics & Geofencing Enhancements | Item 1, Item 2 | `Low` | Existing GPS & Visit Models |
-| **Phase 2** | Customer 360, Competitor Intel & Gamification | Item 3, Item 8, Item 10 | `Low – Med` | Cloud Object Storage, Sage Read APIs |
-| **Phase 3** | Customer Hierarchy & Two-Way ERP Sync | Item 9, Item 11 | `Medium` | Client Sage X3 Approval Webhook Endpoints |
-| **Phase 4** | Technical Whitepaper & Algorithmic Notes | Item 5 | `Doc` | Discovery Sign-off on Formula Baselines |
-| **Phase 5** | Advanced Analytics, AI / ML & Map Intelligence | Item 4, Item 6, Item 7, Item 12 | `High` | Python FastAPI Microservice, Google Places API |
+| **Phase 1** | Visit Scheduling, In-Store Product Audit & Geo-Fencing Controls | Item 1, Item 2 | `Low` | Core Visit Workflow |
+| **Phase 2** | Customer 360 (Slow-Moving Stock), Competitor Intel & Gamification | Item 3, Item 8, Item 10, Item 12 | `Low – Med` | Storage, Native Pipeline |
+| **Phase 3** | Hierarchy in Visits/Orders & Sage X3 Webhook Status Write-Back | Item 9, Item 11 | `Medium` | Sage X3 Webhook Dispatch |
+| **Phase 4** | Algorithmic Whitepaper & Mathematical Formulations | Item 5 | `Doc` | Model Specifications |
+| **Phase 5** | SKU-Level Forecasting & Market Basket Microservice | Item 4, Item 6 (v2), Item 7 | `High` | Python FastAPI Microservice |
 
 ---
 
 ## 6. Client Integration Prerequisites & Infrastructure Checklist
 
-To ensure execution on schedule, the following dependencies must be provisioned and confirmed by the client technical team:
-
-1. **Sage X3 ERP API Availability:**
-   - [ ] AR / Open Items Read Endpoint (for Customer 360).
-   - [ ] Sales History & Order Lines Ingestion Endpoint.
-   - [ ] Stock Batch / Lot Expiry Read Endpoint.
-   - [ ] Two-Way Approval Request Webhook & Status Write-back Endpoint.
-2. **Third-Party Cloud Services:**
-   - [ ] **Google Cloud Platform:** Google Maps Platform project with *Places API (New)*, *Maps JavaScript API*, and *Geolocation API* enabled with billing account attached.
-   - [ ] **Firebase Project:** Firebase Cloud Messaging (FCM) Service Account credentials for push notification triggers.
-   - [ ] **Cloud Storage:** S3 / Azure Blob Storage bucket for competitor photo uploads and generated document PDFs.
-3. **Analytics Infrastructure:**
-   - [ ] Dedicated containerized environment (AWS ECS / Azure App Service / Docker) to host the Python FastAPI Market Basket & Forecasting Microservice.
+1. **Sage X3 Integration Endpoints:**
+   - [ ] Outbound Webhook dispatch configured in Sage X3 for Discount Approval and Order Status transitions.
+   - [ ] Inbound Discount Request Submission Endpoint.
+2. **Third-Party Services:**
+   - [ ] **Firebase Cloud Messaging:** FCM credentials for visit time reminders and approval status alerts.
+   - [ ] **Cloud Storage:** S3 / Azure Blob Storage bucket for competitor photos and documents.
+3. **Analytics Microservice:**
+   - [ ] Containerized environment (Docker / ECS / App Service) for Python FastAPI background analytics worker.
 
 ---
-*End of Extended Scope Technical Architecture Plan.*
+*End of Refined Extended Scope Technical Architecture Plan.*
