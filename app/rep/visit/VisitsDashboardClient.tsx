@@ -12,9 +12,23 @@ import {
   CheckCircle2, 
   Navigation,
   ArrowRight,
-  Plus
+  Plus,
+  Compass,
+  Map as MapIcon,
+  Building2
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import ExportExcelButton from "@/components/ExportExcelButton";
+
+const VisitHierarchyMap = dynamic(() => import("@/components/VisitHierarchyMap"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-[500px] bg-[#FAF8F4] border border-[#E7E2D9] rounded-2xl flex flex-col items-center justify-center text-xs text-gray-400 gap-2">
+      <div className="w-7 h-7 border-2 border-[#B8622A] border-t-transparent rounded-full animate-spin"></div>
+      <span>Loading Territory &amp; Store Map…</span>
+    </div>
+  ),
+});
 
 interface Customer {
   id: string;
@@ -71,7 +85,7 @@ export default function VisitsDashboardClient({ initialVisits, customers }: Prop
   const supabase = createClient();
 
   const [visitsList, setVisitsList] = useState<Visit[]>(initialVisits);
-  const [activeTab, setActiveTab] = useState<"planned" | "history" | "customers">("planned");
+  const [activeTab, setActiveTab] = useState<"planned" | "map" | "customers" | "history">("planned");
   const [searchQuery, setSearchQuery] = useState("");
   const [scheduledNotice, setScheduledNotice] = useState<string | null>(null);
 
@@ -310,7 +324,18 @@ export default function VisitsDashboardClient({ initialVisits, customers }: Prop
                 : "border-transparent text-[#9A988C] hover:text-[#1C2321]"
             }`}
           >
-            📅 Planned Visits ({plannedVisits.length})
+            📅 Planned ({plannedVisits.length})
+          </button>
+          <button
+            onClick={() => { setActiveTab("map"); setSearchQuery(""); }}
+            className={`px-3 py-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-1.5 ${
+              activeTab === "map"
+                ? "border-[#B8622A] text-[#B8622A]"
+                : "border-transparent text-[#9A988C] hover:text-[#1C2321]"
+            }`}
+          >
+            <MapIcon size={13} />
+            <span>🗺️ Store Map</span>
           </button>
           <button
             onClick={() => { setActiveTab("customers"); setSearchQuery(""); }}
@@ -320,7 +345,7 @@ export default function VisitsDashboardClient({ initialVisits, customers }: Prop
                 : "border-transparent text-[#9A988C] hover:text-[#1C2321]"
             }`}
           >
-            🏢 Start Check-In ({customers.length})
+            🏢 Directory ({customers.length})
           </button>
           <button
             onClick={() => { setActiveTab("history"); setSearchQuery(""); }}
@@ -330,7 +355,7 @@ export default function VisitsDashboardClient({ initialVisits, customers }: Prop
                 : "border-transparent text-[#9A988C] hover:text-[#1C2321]"
             }`}
           >
-            📜 Visit History ({pastVisits.length})
+            📜 History ({pastVisits.length})
           </button>
         </div>
 
@@ -365,8 +390,21 @@ export default function VisitsDashboardClient({ initialVisits, customers }: Prop
         </div>
       </div>
 
-      {/* Main content grid */}
-      <div className="space-y-3">
+      {/* Tab Panels */}
+      <div className="space-y-4">
+        {/* Tab: Interactive Territory & Store Map */}
+        {activeTab === "map" && (
+          <div className="animate-in fade-in space-y-4">
+            <VisitHierarchyMap
+              onSelectStoreToPlan={(storeId, storeName) => {
+                setPlanCustomerId(storeId);
+                setShowPlanForm(true);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            />
+          </div>
+        )}
+
         {/* Tab 1: Planned / Active */}
         {activeTab === "planned" && (
           <>
