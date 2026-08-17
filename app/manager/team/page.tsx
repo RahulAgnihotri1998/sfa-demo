@@ -7,13 +7,12 @@ export default async function TeamPage() {
   const { data: rawReps } = await supabase
     .from("users")
     .select("*")
-    .eq("role", "sales_rep")
     .order("full_name");
     
   const { data: rawVisits } = await supabase
     .from("visits")
-    .select("*, customer:customers(name)")
-    .order("planned_date", { ascending: false });
+    .select("*, customer:customers(*)")
+    .order("created_at", { ascending: false });
     
   const { data: rawOrders } = await supabase
     .from("orders")
@@ -25,17 +24,32 @@ export default async function TeamPage() {
     .select("*, customer:customers(name)")
     .order("created_at", { ascending: false });
 
-  const reps = (rawReps || []) as any[];
+  const { data: rawCompetitors } = await supabase
+    .from("competitor_intelligence")
+    .select("*, customer:customers(name)")
+    .order("created_at", { ascending: false });
+
+  const { data: rawAudits } = await supabase
+    .from("visit_product_audits")
+    .select("*, product:products(*)")
+    .order("created_at", { ascending: false });
+
+  const allUsers = (rawReps || []) as any[];
+  const reps = allUsers.filter((u: any) => u.role === "sales_rep" || u.role === "rep");
   const visits = (rawVisits || []) as any[];
   const orders = (rawOrders || []) as any[];
   const discounts = (rawDiscounts || []) as any[];
+  const competitors = (rawCompetitors || []) as any[];
+  const audits = (rawAudits || []) as any[];
 
   return (
     <TeamPageClient
-      reps={reps}
+      reps={reps.length > 0 ? reps : allUsers}
       visits={visits}
       orders={orders}
       discounts={discounts}
+      competitors={competitors}
+      audits={audits}
     />
   );
 }

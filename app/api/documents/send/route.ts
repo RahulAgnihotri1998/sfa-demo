@@ -36,6 +36,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing document record" }, { status: 400 });
   }
 
+  const host = request.headers.get("host") || "sfa-demo.codeagni.com";
+  const protocol = request.headers.get("x-forwarded-proto") || (host.includes("localhost") ? "http" : "https");
+  const baseUrl = `${protocol}://${host}`;
+  const fullDocUrl = document.file_url ? (
+    document.file_url.startsWith("http")
+      ? document.file_url
+      : `${baseUrl}${document.file_url.startsWith("/") ? "" : "/"}${document.file_url}`
+  ) : "";
+
   const hasSMTP = process.env.SMTP_USERNAME && process.env.SMTP_PASSWORD;
 
   try {
@@ -58,7 +67,7 @@ export async function POST(request: Request) {
             <div style="background: #f8faff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin: 20px 0;">
               <p style="margin: 0; font-weight: 600; color: #1e3a8a;">📄 ${document.title}</p>
               <p style="margin: 6px 0 0; font-size: 13px; color: #64748b; text-transform: capitalize;">${document.type}</p>
-              ${document.file_url ? `<a href="${document.file_url}" style="display: inline-block; margin-top: 12px; background: #2952e3; color: white; text-decoration: none; padding: 8px 18px; border-radius: 8px; font-size: 13px; font-weight: 600;">View Document →</a>` : ""}
+              ${fullDocUrl ? `<a href="${fullDocUrl}" target="_blank" style="display: inline-block; margin-top: 12px; background: #2952e3; color: white; text-decoration: none; padding: 8px 18px; border-radius: 8px; font-size: 13px; font-weight: 600;">View & Download Document →</a>` : ""}
             </div>
             
             <p style="color: #64748b; font-size: 13px;">Regards,<br/><strong>${user?.email ?? "Master Baker Team"}</strong></p>
@@ -77,7 +86,7 @@ export async function POST(request: Request) {
 TO: ${recipientEmail}
 SUBJECT: ${document.title}
 MESSAGE: ${message || `Please find attached: ${document.title}`}
-DOCUMENT URL: ${document.file_url}
+DOCUMENT URL: ${fullDocUrl}
 SENDER: ${user?.email}
 =========================================`);
     }

@@ -63,13 +63,15 @@ export async function POST(request: Request) {
     }
 
     if (action === "insert") {
-      const result = await builder.insert(values);
-      return NextResponse.json(result);
+      builder.insert(values);
+      const data = await builder.execute();
+      return NextResponse.json({ data, error: null });
     }
 
     if (action === "update") {
-      const result = await builder.update(values);
-      return NextResponse.json(result);
+      builder.update(values);
+      const data = await builder.execute();
+      return NextResponse.json({ data, error: null });
     }
 
     if (action === "delete") {

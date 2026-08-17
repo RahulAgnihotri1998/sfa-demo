@@ -22,11 +22,15 @@ import {
   SalesRepSummary,
   CustomerForecast,
 } from "@/lib/data/productData";
+import { buildForecastScorecards, FORECAST_ACCURACY_HISTORY } from "@/lib/data/analyticsEngine";
+import ExportExcelButton from "@/components/ExportExcelButton";
 
 export default function ManagerForecastingPage() {
   const [selectedRepId, setSelectedRepId] = useState<string>("all");
   const [repsData, setRepsData] = useState<SalesRepSummary[]>(SALES_REPS_DATA);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  const forecastScorecards = buildForecastScorecards();
 
   // Selected Rep or Aggregate
   const selectedRep = repsData.find((r) => r.id === selectedRepId);
@@ -166,15 +170,47 @@ export default function ManagerForecastingPage() {
 
       {/* PER-CUSTOMER 6-MONTH HISTORICAL & 3-MONTH PROCUREMENT MATRIX */}
       <div className="card p-5 space-y-4 bg-white">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-gray-100">
-          <div>
-            <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <Building size={18} className="text-brand-600" />
-              {selectedRep ? `${selectedRep.name}'s Customer Purchase & Procurement Forecast` : "All Sales Reps Customer Purchase & Procurement Forecast"}
-            </h2>
-            <p className="text-xs text-gray-400">6-Month Historical Purchase Breakdown (M-6 to M-1) &amp; 3-Month Inventory Procurement Projections</p>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-gray-100">
+            <div>
+              <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                <Building size={18} className="text-brand-600" />
+                {selectedRep ? `${selectedRep.name}'s Customer Purchase & Procurement Forecast` : "All Sales Reps Customer Purchase & Procurement Forecast"}
+              </h2>
+              <p className="text-xs text-gray-400">6-Month Historical Purchase Breakdown (M-6 to M-1) &amp; 3-Month Inventory Procurement Projections</p>
+            </div>
+            <ExportExcelButton
+              data={customersToShow.flatMap((c) =>
+                c.items.map((item) => {
+                  const h = item.historical6mUnits || [0, 0, 0, 0, 0, 0];
+                  const total3MUnits = item.m1ForecastUnits + item.m2ForecastUnits + item.m3ForecastUnits;
+                  return {
+                    "Customer Name": c.customerName,
+                    "Territory": c.territory,
+                    "Sales Rep": c.repName || (selectedRep ? selectedRep.name : "—"),
+                    "Brand": item.brand,
+                    "Product SKU": item.productId,
+                    "Product Name": item.productName,
+                    "Stock Status": item.stockStatus,
+                    "M-6 Units": h[0],
+                    "M-5 Units": h[1],
+                    "M-4 Units": h[2],
+                    "M-3 Units": h[3],
+                    "M-2 Units": h[4],
+                    "M-1 Units": h[5],
+                    "Month +1 Proj Units": item.m1ForecastUnits,
+                    "Month +2 Proj Units": item.m2ForecastUnits,
+                    "Month +3 Proj Units": item.m3ForecastUnits,
+                    "Total 3M Proj Units": total3MUnits,
+                    "Unit Price (AED)": item.unitPrice,
+                    "Total 3M Value (AED)": total3MUnits * item.unitPrice,
+                  };
+                })
+              )}
+              filename="Manager-Customer-Forecast-Matrix"
+              sheetName="Forecast Matrix"
+              label="Export Team Forecast"
+            />
           </div>
-        </div>
 
         {/* Customer Tables */}
         <div className="space-y-6">
@@ -201,9 +237,37 @@ export default function ManagerForecastingPage() {
                       )}
                     </div>
                   </div>
-                  <div className="text-right">
-                    <span className="text-xs text-gray-400 mr-2">3-Month Trader Commit:</span>
-                    <span className="text-sm font-extrabold text-brand-700">AED {cust3MTotal.toLocaleString("en-AE")}</span>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <span className="text-xs text-gray-400 mr-2">3-Month Trader Commit:</span>
+                      <span className="text-sm font-extrabold text-brand-700">AED {cust3MTotal.toLocaleString("en-AE")}</span>
+                    </div>
+                    <ExportExcelButton
+                      data={cust.items.map((item) => {
+                        const h = item.historical6mUnits || [0, 0, 0, 0, 0, 0];
+                        const total3MUnits = item.m1ForecastUnits + item.m2ForecastUnits + item.m3ForecastUnits;
+                        return {
+                          "Customer": cust.customerName,
+                          "Brand": item.brand,
+                          "Product Name": item.productName,
+                          "Stock Status": item.stockStatus,
+                          "M-6 Units": h[0],
+                          "M-5 Units": h[1],
+                          "M-4 Units": h[2],
+                          "M-3 Units": h[3],
+                          "M-2 Units": h[4],
+                          "M-1 Units": h[5],
+                          "Month +1 Proj": item.m1ForecastUnits,
+                          "Month +2 Proj": item.m2ForecastUnits,
+                          "Month +3 Proj": item.m3ForecastUnits,
+                          "Total 3M Units": total3MUnits,
+                          "Unit Price (AED)": item.unitPrice,
+                          "Total 3M Value (AED)": total3MUnits * item.unitPrice,
+                        };
+                      })}
+                      filename={`${cust.customerName.replace(/[^a-zA-Z0-9_-]/g, "_")}-Demand-Forecast`}
+                      sheetName="Demand Forecast"
+                    />
                   </div>
                 </div>
 
@@ -288,6 +352,95 @@ export default function ManagerForecastingPage() {
           })}
         </div>
       </div>
+
+      {/* SALESPERSON FORECAST-PERFORMANCE SCORECARD & ACCURACY TRACKING */}
+      <div className="card p-6 bg-white border border-gray-200 rounded-2xl space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div>
+            <div className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+              📊 Extended Analytics Layer
+            </div>
+            <h2 className="text-lg font-bold text-gray-900 mt-1">Salesperson Forecast-Performance Scorecard &amp; Variance Engine</h2>
+            <p className="text-xs text-gray-500">
+              Auditing historical quarterly forecast accuracy (MAPE), committed volume vs actual sales achievement, and rank scorecards.
+            </p>
+          </div>
+          <ExportExcelButton
+            data={FORECAST_ACCURACY_HISTORY.map((s) => ({
+              "Quarter": s.period,
+              "Sales Representative": s.repName,
+              "Territory": s.territory,
+              "Committed Forecast (Units)": s.forecastUnits,
+              "Actual Sales (Units)": s.actualUnits,
+              "Accuracy %": `${s.accuracyPct.toFixed(1)}%`,
+              "Variance %": `${s.variancePct > 0 ? "+" : ""}${s.variancePct.toFixed(1)}%`,
+              "MAPE Error %": `${s.mape.toFixed(1)}%`,
+            }))}
+            filename="Salesperson-Forecast-Accuracy-Scorecard"
+            sheetName="Forecast Accuracy"
+          />
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-100/80 text-gray-700 font-bold border-b border-gray-200">
+                <th className="p-3">Rank</th>
+                <th className="p-3">Salesperson</th>
+                <th className="p-3">Territory</th>
+                <th className="p-3 text-center">2025-Q3</th>
+                <th className="p-3 text-center">2025-Q4</th>
+                <th className="p-3 text-center">2026-Q1</th>
+                <th className="p-3 text-center bg-indigo-50/70 text-indigo-900">2026-Q2 (Latest)</th>
+                <th className="p-3 text-center">Variance %</th>
+                <th className="p-3 text-center">Mean Accuracy</th>
+                <th className="p-3 text-center">Grade</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {forecastScorecards.map((sc) => {
+                const q3 = sc.quarterlyAccuracy.find((q) => q.period === "2025-Q3")?.accuracyPct ?? 90;
+                const q4 = sc.quarterlyAccuracy.find((q) => q.period === "2025-Q4")?.accuracyPct ?? 92;
+                const q1 = sc.quarterlyAccuracy.find((q) => q.period === "2026-Q1")?.accuracyPct ?? 94;
+                const q2 = sc.currentQuarter.accuracyPct;
+                const variance = sc.currentQuarter.variancePct;
+
+                return (
+                  <tr key={sc.repId} className="hover:bg-slate-50/70 transition-colors">
+                    <td className="p-3 font-bold text-gray-700">#{sc.rank}</td>
+                    <td className="p-3 font-bold text-gray-900">{sc.repName}</td>
+                    <td className="p-3 text-gray-600">{sc.territory}</td>
+                    <td className="p-3 text-center font-mono">{q3.toFixed(1)}%</td>
+                    <td className="p-3 text-center font-mono">{q4.toFixed(1)}%</td>
+                    <td className="p-3 text-center font-mono">{q1.toFixed(1)}%</td>
+                    <td className="p-3 text-center font-mono font-bold bg-indigo-50/40 text-indigo-900">{q2.toFixed(1)}%</td>
+                    <td className="p-3 text-center font-mono font-bold text-slate-700">
+                      <span className={variance < 0 ? "text-amber-700" : "text-emerald-700"}>
+                        {variance > 0 ? `+${variance.toFixed(1)}%` : `${variance.toFixed(1)}%`}
+                      </span>
+                    </td>
+                    <td className="p-3 text-center font-mono font-extrabold text-emerald-700">
+                      {sc.overallAccuracyScore}%
+                    </td>
+                    <td className="p-3 text-center">
+                      <span className={`inline-block px-2.5 py-0.5 rounded text-[10px] font-bold ${
+                        sc.grade === "A"
+                          ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                          : sc.grade === "B"
+                          ? "bg-blue-100 text-blue-800 border border-blue-300"
+                          : "bg-amber-100 text-amber-800 border border-amber-300"
+                      }`}>
+                        Tier {sc.grade}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
+

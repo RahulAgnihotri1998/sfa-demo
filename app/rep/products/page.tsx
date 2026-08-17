@@ -17,6 +17,7 @@ import {
   PlusCircle,
 } from "lucide-react";
 import { MASTER_PRODUCTS, ProductMaster } from "@/lib/data/productData";
+import ExportExcelButton from "@/components/ExportExcelButton";
 
 const STATUS_CONFIG: Record<string, { label: string; cls: string; icon: React.ReactNode }> = {
   active:       { label: "Active",       cls: "bg-emerald-50 text-emerald-700 border-emerald-200",  icon: <CheckCircle2 size={11} /> },
@@ -89,6 +90,22 @@ export default function ProductsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <ExportExcelButton
+            data={filtered.map((p) => ({
+              "SKU Code": p.sku,
+              "Product Name": p.name || p.title,
+              "Brand": p.brand,
+              "Category": p.category,
+              "Origin": p.origin || "—",
+              "Base Price (AED)": p.base_price,
+              "Stock Status": p.stock_status,
+              "Stock Units": p.stock_units || "—",
+              "Promo Active": p.is_promotion ? "YES" : "NO",
+              "Expiry Date": p.expiry_date || "—",
+            }))}
+            filename="Master-Baker-Product-Catalog"
+            sheetName="Products"
+          />
           <Link
             href="/rep/products/new"
             className="btn-secondary text-xs flex items-center gap-1 px-3 py-2 border-brand-200 text-brand-700 bg-brand-50 hover:bg-brand-100"

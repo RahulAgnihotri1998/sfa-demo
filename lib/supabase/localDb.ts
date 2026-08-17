@@ -119,7 +119,13 @@ export class LocalQueryBuilder {
     const values = this.updateValues || {};
     const keys = Object.keys(values);
     const setClauses = keys.map((key, i) => `"${key}" = $${i + 1}`);
-    const params = keys.map((key) => values[key]);
+    const params = keys.map((key) => {
+      const val = values[key];
+      if (val !== null && typeof val === "object" && !(val instanceof Date)) {
+        return JSON.stringify(val);
+      }
+      return val === undefined ? null : val;
+    });
 
     let sql = `UPDATE "${this.tableName}" SET ${setClauses.join(", ")}`;
     sql += compileWhereClauses(this.filters, params);
@@ -144,7 +150,9 @@ export class LocalQueryBuilder {
 
     rows.forEach((row, rowIndex) => {
       const placeholders = keys.map((key) => {
-        params.push(row[key]);
+        const val = row[key];
+        const sanitized = val !== null && typeof val === "object" && !(val instanceof Date) ? JSON.stringify(val) : (val === undefined ? null : val);
+        params.push(sanitized);
         return `$${params.length}`;
       });
       valuePlaceholders.push(`(${placeholders.join(", ")})`);
@@ -271,8 +279,28 @@ export class LocalQueryBuilder {
       }));
     }
 
-    if (this.tableName === "purchase_history" && this.selectFields.includes("customer:customers")) {
-      // Alerts query
+    if (this.tableName === "customer_pricing" && this.selectFields.includes("product:products")) {
+      sql = `
+        SELECT cp.*, p.name as product_name, p.sku as product_sku
+        FROM customer_pricing cp
+        LEFT JOIN products p ON cp.product_id = p.id
+      `;
+      sql += compileWhereClauses(this.filters, params, "cp");
+      if (this.orderField) {
+        sql += ` ORDER BY cp."${this.orderField}" ${this.orderAsc ? "ASC" : "DESC"}`;
+      }
+      if (this.limitCount) {
+        sql += ` LIMIT ${this.limitCount}`;
+      }
+      const res = await pool.query(sql, params);
+      return res.rows.map((row) => ({
+        ...row,
+        product: { name: row.product_name, sku: row.product_sku }
+      }));
+    }
+
+    if (this.tableName === "purchase_history" && (this.selectFields.includes("customer:customers") || this.selectFields.includes("product:products"))) {
+      // Alerts & Customer 360 query
       sql = `
         SELECT ph.*, c.name as customer_name, p.name as product_name
         FROM purchase_history ph
@@ -283,11 +311,39 @@ export class LocalQueryBuilder {
       if (this.orderField) {
         sql += ` ORDER BY ph."${this.orderField}" ${this.orderAsc ? "ASC" : "DESC"}`;
       }
+      if (this.limitCount) {
+        sql += ` LIMIT ${this.limitCount}`;
+      }
       const res = await pool.query(sql, params);
       return res.rows.map((row) => ({
         ...row,
         customer: { name: row.customer_name },
         product: { name: row.product_name }
+      }));
+    }
+
+    if (this.tableName === "visit_product_audits" && this.selectFields.includes("product:products")) {
+      sql = `
+        SELECT va.*, p.name as product_name, p.sku as product_sku, p.base_price as product_base_price
+        FROM visit_product_audits va
+        LEFT JOIN products p ON va.product_id = p.id
+      `;
+      sql += compileWhereClauses(this.filters, params, "va");
+      if (this.orderField) {
+        sql += ` ORDER BY va."${this.orderField}" ${this.orderAsc ? "ASC" : "DESC"}`;
+      }
+      if (this.limitCount) {
+        sql += ` LIMIT ${this.limitCount}`;
+      }
+      const res = await pool.query(sql, params);
+      return res.rows.map((row) => ({
+        ...row,
+        product: {
+          id: row.product_id,
+          name: row.product_name,
+          sku: row.product_sku,
+          base_price: row.product_base_price,
+        }
       }));
     }
 
@@ -337,11 +393,24 @@ export class LocalQueryBuilder {
       }));
     }
 
-    if (this.tableName === "visits" && this.selectFields.includes("customer:customers")) {
+    if (this.tableName === "visits" && (this.selectFields.includes("customer:customers") || this.selectFields.includes("customer"))) {
       sql = `
-        SELECT v.*, c.name as customer_name
+        SELECT v.*, 
+               c.name as customer_name,
+               c.territory as customer_territory,
+               c.address as customer_address,
+               c.contact_name as customer_contact_name,
+               c.contact_phone as customer_contact_phone,
+               c.contact_email as customer_contact_email,
+               c.latitude as customer_latitude,
+               c.longitude as customer_longitude,
+               c.geofence_radius_m as customer_geofence_radius_m,
+               c.parent_id as customer_parent_id,
+               c.open_items_amount as customer_open_items_amount,
+               u.full_name as sales_rep_name
         FROM visits v
         LEFT JOIN customers c ON v.customer_id = c.id
+        LEFT JOIN users u ON v.sales_rep_id = u.id
       `;
       sql += compileWhereClauses(this.filters, params, "v");
       if (this.orderField) {
@@ -353,7 +422,21 @@ export class LocalQueryBuilder {
       const res = await pool.query(sql, params);
       return res.rows.map((row) => ({
         ...row,
-        customer: { name: row.customer_name }
+        sales_rep_name: row.sales_rep_name,
+        customer: {
+          id: row.customer_id,
+          name: row.customer_name,
+          territory: row.customer_territory,
+          address: row.customer_address,
+          contact_name: row.customer_contact_name,
+          contact_phone: row.customer_contact_phone,
+          contact_email: row.customer_contact_email,
+          latitude: row.customer_latitude,
+          longitude: row.customer_longitude,
+          geofence_radius_m: row.customer_geofence_radius_m,
+          parent_id: row.customer_parent_id,
+          open_items_amount: row.customer_open_items_amount,
+        }
       }));
     }
 

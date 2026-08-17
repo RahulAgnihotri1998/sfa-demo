@@ -2,6 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { MapPin, Clock, AlertTriangle, ChevronRight, TrendingUp, ShoppingCart, Users } from "lucide-react";
 import { format } from "date-fns";
+import { GamificationBanner } from "@/components/GamificationBanner";
+import { PowerBiSalesDashboard } from "@/components/PowerBiSalesDashboard";
+import ExportExcelButton from "@/components/ExportExcelButton";
 
 export default async function RepHomePage() {
   const supabase = await createClient();
@@ -85,6 +88,18 @@ export default async function RepHomePage() {
         </div>
       </div>
 
+      {/* Gamification & Leaderboard Badge */}
+      <GamificationBanner repName={profile?.full_name} points={1820} streakDays={7} monthlyRank={2} />
+
+      {/* ── SALES BUDGET VS ACTUAL PERFORMANCE (POWER BI HUB) ── */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <p className="section-title mb-0">Sales Budget vs Actual Performance (Customer Basis)</p>
+          <span className="text-xs text-slate-500 font-medium">Customer-Wise Target vs Actual &amp; Receivables Hub</span>
+        </div>
+        <PowerBiSalesDashboard defaultTab="customer" repId={user?.id} role="sales_rep" />
+      </div>
+
       {/* Quick actions */}
       <div>
         <p className="section-title">Quick actions</p>
@@ -163,9 +178,24 @@ export default async function RepHomePage() {
       <div>
         <div className="flex items-center justify-between mb-3">
           <p className="section-title mb-0">Recent Orders Log</p>
-          <Link href="/rep/order/new" className="text-xs text-brand-600 font-semibold">
-            + New Order
-          </Link>
+          <div className="flex items-center gap-2">
+            <ExportExcelButton
+              data={orders.map((o: any) => ({
+                "Order ID": o.id,
+                "Customer": o.customer?.name || "Unknown Customer",
+                "Territory": o.customer?.territory || "—",
+                "Products": o.order_items?.map((item: any) => `${item.product?.name || "Product"} (${item.quantity})`).join(", ") || "—",
+                "Total Amount (AED)": o.total_amount,
+                "ERP Status": o.status === "sent_to_erp" ? "Sent to Sage" : o.status,
+                "Date": format(new Date(o.captured_at || Date.now()), "dd MMM yyyy HH:mm"),
+              }))}
+              filename="Rep-Recent-Orders-Log"
+              sheetName="Orders"
+            />
+            <Link href="/rep/order/new" className="text-xs text-brand-600 font-semibold">
+              + New Order
+            </Link>
+          </div>
         </div>
         <div className="card overflow-hidden">
           <div className="overflow-x-auto">

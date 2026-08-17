@@ -23,6 +23,7 @@ import {
   Send,
 } from "lucide-react";
 import { MASTER_PRODUCTS } from "@/lib/data/productData";
+import ExportExcelButton from "@/components/ExportExcelButton";
 
 const STATUS_CONFIG: Record<string, { label: string; cls: string; icon: any }> = {
   active:       { label: "Active (In Stock)", cls: "bg-emerald-50 text-emerald-700 border-emerald-200",  icon: CheckCircle2 },
@@ -268,9 +269,31 @@ export default async function ProductDetailPage({
 
       {/* SECTION 3: 6-MONTH HISTORICAL BUYING & 3-MONTH FORECAST matrix */}
       <div className="card p-6 space-y-4 bg-white border border-gray-200 shadow-sm">
-        <h2 className="text-base font-bold text-gray-900 flex items-center gap-2 border-b border-gray-100 pb-2">
-          <TrendingUp size={18} className="text-brand-600" /> Historical Sales Velocity &amp; 3-Month Demand Forecast
-        </h2>
+        <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+          <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
+            <TrendingUp size={18} className="text-brand-600" /> Historical Sales Velocity &amp; 3-Month Demand Forecast
+          </h2>
+          <ExportExcelButton
+            data={[{
+              "Product SKU": product.sku,
+              "Product Name": product.name,
+              "Brand": product.brand || "—",
+              "Category": product.category || "—",
+              "Unit Price (AED)": product.base_price,
+              "M-6 (Units)": historical6M[0],
+              "M-5 (Units)": historical6M[1],
+              "M-4 (Units)": historical6M[2],
+              "M-3 (Units)": historical6M[3],
+              "M-2 (Units)": historical6M[4],
+              "M-1 Last Month (Units)": historical6M[5],
+              "Month +1 Proj (Units)": forecast3M[0],
+              "Month +2 Proj (Units)": forecast3M[1],
+              "Month +3 Proj (Units)": forecast3M[2],
+            }]}
+            filename={`${product.sku}-Demand-Forecast`}
+            sheetName="Forecast"
+          />
+        </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">

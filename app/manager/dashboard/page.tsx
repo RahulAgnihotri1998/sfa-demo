@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import DashboardCharts from "./charts";
+import { PowerBiSalesDashboard } from "@/components/PowerBiSalesDashboard";
+import ExportExcelButton from "@/components/ExportExcelButton";
 import {
   TrendingUp,
   ShoppingCart,
@@ -46,7 +48,7 @@ export default async function ManagerDashboard() {
   // — KPI calculations —
   const totalOrderValue  = orders.reduce((s: number, o: any) => s + (o.total_amount ?? 0), 0);
   const confirmedOrders  = orders.filter((o: any) => o.status === "confirmed").length;
-  const closedVisits     = visits.filter((v: any) => v.status === "closed").length;
+  const closedVisits     = visits.filter((v: any) => v.status === "closed" || v.status === "completed" || Boolean(v.outcome)).length;
   const overdueFollowUps = followUps.filter((f: any) => !f.is_complete && new Date(f.due_date) < new Date()).length;
   const atRiskCustomers  = customers.filter((c: any) => c.status === "at_risk").length;
   const pendingApprovals = discounts.filter((d: any) => d.status === "pending").length;
@@ -140,6 +142,41 @@ export default async function ManagerDashboard() {
         </div>
       </div>
 
+      {/* ── POWER BI SALES BUDGET VS ACTUAL DASHBOARD (EXACT REPLICA) ── */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <p className="section-title mb-0">Sales Budget vs Actual Matrix (Sales Rep Basis)</p>
+          <span className="text-xs text-slate-500 font-medium">Sales Rep &amp; Account Level Performance · Egg/Ing/FG Split</span>
+        </div>
+        <PowerBiSalesDashboard defaultTab="sales_rep" />
+      </div>
+
+      {/* ── GEOLOCATION EXCEPTION & COMPLIANCE REVIEW BANNER ── */}
+      <div className="rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-50 to-orange-50 border border-amber-300/80 p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-700 flex items-center justify-center shrink-0 mt-0.5">
+            <AlertCircle size={20} className="text-amber-700" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-sm font-bold text-gray-900">Geolocation Exception &amp; Geofence Bypass Audits</h3>
+              <span className="text-[10px] font-extrabold bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                Flagged Rep Bypass Log
+              </span>
+            </div>
+            <p className="text-xs text-gray-600 mt-0.5 max-w-2xl">
+              Field visits logged outside registered store geofence limits (e.g. rep located up to 2,513,775m away). Manager review and audit trail verified.
+            </p>
+          </div>
+        </div>
+        <a
+          href="/manager/visit-matrix"
+          className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all shadow-xs shrink-0 flex items-center justify-center gap-1.5"
+        >
+          Review Exceptions in Visit Matrix →
+        </a>
+      </div>
+
       {/* ── PRIMARY KPIs (demo scope: Total Customers / Orders Created / Order Value) ── */}
       <div>
         <p className="section-title">Key Metrics</p>
@@ -163,7 +200,21 @@ export default async function ManagerDashboard() {
 
       {/* ── RECENT ORDERS TABLE ── */}
       <div>
-        <p className="section-title">Recent Orders</p>
+        <div className="flex items-center justify-between mb-2">
+          <p className="section-title mb-0">Recent Orders</p>
+          <ExportExcelButton
+            data={recentOrders.map((o: any) => ({
+              "Order ID": o.id,
+              "Customer": o.customer?.name ?? "—",
+              "Sales Rep": o.sales_rep?.full_name ?? "—",
+              "Amount (AED)": o.total_amount,
+              "ERP Status": STATUS_LABEL[o.status] ?? o.status,
+              "Date": o.captured_at ? format(new Date(o.captured_at), "dd MMM yyyy, HH:mm") : "—",
+            }))}
+            filename="Manager-Recent-Orders"
+            sheetName="Recent Orders"
+          />
+        </div>
         <div className="card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

@@ -20,6 +20,7 @@ import {
   ShoppingBag,
 } from "lucide-react";
 import { CUSTOMER_FORECASTS, CustomerForecast } from "@/lib/data/productData";
+import ExportExcelButton from "@/components/ExportExcelButton";
 
 export default function RepForecastingPage() {
   const [forecasts, setForecasts] = useState<CustomerForecast[]>(CUSTOMER_FORECASTS);
@@ -165,6 +166,38 @@ export default function RepForecastingPage() {
               </option>
             ))}
           </select>
+
+          <ExportExcelButton
+            data={displayedCustomers.flatMap((c) =>
+              c.items.map((item) => {
+                const h = item.historical6mUnits || [0, 0, 0, 0, 0, 0];
+                const total3MUnits = item.m1ForecastUnits + item.m2ForecastUnits + item.m3ForecastUnits;
+                return {
+                  "Customer Name": c.customerName,
+                  "Territory": c.territory,
+                  "Sales Rep": c.repName || "—",
+                  "Brand": item.brand,
+                  "Product Name": item.productName,
+                  "Status": item.stockStatus,
+                  "M-6 (Units)": h[0],
+                  "M-5 (Units)": h[1],
+                  "M-4 (Units)": h[2],
+                  "M-3 (Units)": h[3],
+                  "M-2 (Units)": h[4],
+                  "M-1 (Units)": h[5],
+                  "Month +1 Proj (Units)": item.m1ForecastUnits,
+                  "Month +2 Proj (Units)": item.m2ForecastUnits,
+                  "Month +3 Proj (Units)": item.m3ForecastUnits,
+                  "Total 3M Proj Units": total3MUnits,
+                  "Unit Price (AED)": item.unitPrice,
+                  "Total 3M Value (AED)": total3MUnits * item.unitPrice,
+                };
+              })
+            )}
+            filename="Customer-Purchase-Forecast-Matrix"
+            sheetName="Forecast Matrix"
+            label="Export All Forecasts"
+          />
         </div>
       </div>
 
@@ -197,9 +230,37 @@ export default function RepForecastingPage() {
                   </p>
                 </div>
 
-                <div className="text-right">
-                  <span className="text-xs text-gray-400 mr-2">3-Month Trader Commitment:</span>
-                  <span className="text-base font-extrabold text-brand-700">AED {cust3MTotal.toLocaleString("en-AE")}</span>
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <span className="text-xs text-gray-400 mr-2">3-Month Trader Commitment:</span>
+                    <span className="text-base font-extrabold text-brand-700">AED {cust3MTotal.toLocaleString("en-AE")}</span>
+                  </div>
+                  <ExportExcelButton
+                    data={cust.items.map((item) => {
+                      const h = item.historical6mUnits || [0, 0, 0, 0, 0, 0];
+                      const total3MUnits = item.m1ForecastUnits + item.m2ForecastUnits + item.m3ForecastUnits;
+                      return {
+                        "Customer": cust.customerName,
+                        "Brand": item.brand,
+                        "Product Name": item.productName,
+                        "Stock Status": item.stockStatus,
+                        "M-6 Units": h[0],
+                        "M-5 Units": h[1],
+                        "M-4 Units": h[2],
+                        "M-3 Units": h[3],
+                        "M-2 Units": h[4],
+                        "M-1 Units": h[5],
+                        "Month +1 Proj": item.m1ForecastUnits,
+                        "Month +2 Proj": item.m2ForecastUnits,
+                        "Month +3 Proj": item.m3ForecastUnits,
+                        "Total 3M Units": total3MUnits,
+                        "Unit Price (AED)": item.unitPrice,
+                        "Total 3M Value (AED)": total3MUnits * item.unitPrice,
+                      };
+                    })}
+                    filename={`${cust.customerName.replace(/[^a-zA-Z0-9_-]/g, "_")}-Demand-Forecast`}
+                    sheetName="Demand Forecast"
+                  />
                 </div>
               </div>
 

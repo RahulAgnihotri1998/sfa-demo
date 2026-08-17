@@ -9,6 +9,7 @@ import {
   Sparkles,
   ArrowRight,
 } from "lucide-react";
+import ExportExcelButton from "@/components/ExportExcelButton";
 
 export default async function AlertsPage() {
   const supabase = await createClient();
@@ -64,11 +65,26 @@ export default async function AlertsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-xl font-bold text-gray-900">Purchase Decline Alerts</h1>
-        <p className="text-sm text-gray-500 mt-0.5">
-          Proactive account monitoring flagging drop-offs in customer order volume.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900">Purchase Decline Alerts</h1>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Proactive account monitoring flagging drop-offs in customer order volume.
+          </p>
+        </div>
+        <ExportExcelButton
+          data={alerts.map((a) => ({
+            "Customer Name": a.customer,
+            "Product": a.product,
+            "Drop %": `-${a.dropPct}%`,
+            "Prior Monthly Avg (AED)": a.priorAvg,
+            "Latest Month Amount (AED)": a.latest,
+            "Estimated Loss (AED)": a.loss,
+          }))}
+          filename="Customer-Purchase-Decline-Alerts"
+          sheetName="Decline Alerts"
+          label="Export Alerts"
+        />
       </div>
 
       {/* KPI Summary Block */}

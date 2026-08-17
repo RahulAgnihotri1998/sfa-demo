@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { Search, MapPin, ChevronRight, Navigation, Globe, Map, List, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Search, MapPin, ChevronRight, Navigation, Globe, Map, List, CheckCircle2, AlertTriangle, Network, Building2 } from "lucide-react";
+import { getAccountHierarchy } from "@/lib/hierarchy/accountHierarchy";
+import ExportExcelButton from "@/components/ExportExcelButton";
 
 // Dynamically import map component with SSR disabled
 const CustomerMap = dynamic(() => import("@/components/CustomerMap"), {
@@ -145,9 +147,28 @@ export default function CustomersPage() {
           <h1 className="text-lg font-semibold text-gray-900">Customers</h1>
           <p className="text-xs text-gray-400 mt-0.5">Manage accounts & check-ins</p>
         </div>
-        <Link href="/rep/customers/new" className="btn-primary py-1.5 px-3 text-xs">
-          + Add Customer
-        </Link>
+        <div className="flex items-center gap-2">
+          <ExportExcelButton
+            data={filtered.map((c) => {
+              const hier = getAccountHierarchy(c.id);
+              return {
+                "Customer Name": c.name,
+                "Group / Hierarchy": hier.group.group_name,
+                "Territory": c.territory,
+                "Country": c.country,
+                "Status": c.status === "at_risk" ? "At Risk" : "Active",
+                "Open AR Receivables (AED)": c.open_items_amount || 0,
+                "Address": c.address || "—",
+                "Distance (km)": c.distance !== undefined ? Number(c.distance.toFixed(1)) : "—",
+              };
+            })}
+            filename="Customer-Accounts-Directory"
+            sheetName="Customers"
+          />
+          <Link href="/rep/customers/new" className="btn-primary py-1.5 px-3 text-xs">
+            + Add Customer
+          </Link>
+        </div>
       </div>
 
       {/* View Tabs */}
@@ -304,7 +325,10 @@ export default function CustomersPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-1.5 py-0.2 rounded-md">
+                      <Network size={10} /> {getAccountHierarchy(c.id).group.group_name.split(" (")[0]}
+                    </span>
                     <span className="flex items-center gap-0.5 text-xs text-gray-400">
                       <MapPin size={11} className="text-gray-400" />
                       {c.territory}, {c.country}

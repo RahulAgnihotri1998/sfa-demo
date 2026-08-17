@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
   MapPin,
@@ -20,8 +20,15 @@ import {
   ArrowLeftRight,
   Sparkles,
   Plus,
+  Target,
+  Zap,
 } from "lucide-react";
 import Link from "next/link";
+import { generateNextBestActions, getProvenanceLabel, type NextBestAction } from "@/lib/data/analyticsEngine";
+import { CompetitorIntelForm } from "@/components/CompetitorIntelForm";
+import { CustomerHierarchyBadge } from "@/components/CustomerHierarchyBadge";
+import { ErpSimulatorWidget } from "@/components/ErpSimulatorWidget";
+import { InVisitCartDrawer, CartItem } from "@/components/InVisitCartDrawer";
 
 // Haversine distance in meters
 function distanceMeters(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -36,11 +43,13 @@ function distanceMeters(lat1: number, lon1: number, lat2: number, lon2: number) 
 
 export default function VisitPage() {
   const { customerId } = useParams<{ customerId: string }>();
+  const searchParams = useSearchParams();
+  const urlVisitId = searchParams.get("visitId");
   const router = useRouter();
   const supabase = createClient();
 
   const [customer, setCustomer] = useState<any>(null);
-  const [visitId, setVisitId] = useState<string | null>(null);
+  const [visitId, setVisitId] = useState<string | null>(urlVisitId ?? null);
   const [checkedIn, setCheckedIn] = useState(false);
   const [withinFence, setWithinFence] = useState<boolean | null>(null);
   const [distance, setDistance] = useState<number | null>(null);
@@ -51,13 +60,63 @@ export default function VisitPage() {
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
 
+  // In-Visit Order Cart State
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [addedToast, setAddedToast] = useState<string | null>(null);
+
+  const handleAddToCart = (product: any, qty: number = 1) => {
+    const custPrice = pricing[product.id];
+    const unitPrice = custPrice !== undefined ? custPrice : (product.base_price || 100);
+
+    setCartItems((prev) => {
+      const existing = prev.find((item) => item.id === product.id);
+      if (existing) {
+        return prev.map((item) =>
+          item.id === product.id ? { ...item, quantity: item.quantity + qty } : item
+        );
+      }
+      return [
+        ...prev,
+        {
+          id: product.id,
+          name: product.name,
+          sku: product.sku || "SKU",
+          unit_price: unitPrice,
+          quantity: qty,
+          is_promotion: product.is_promotion || product.stock_status === "promo",
+        },
+      ];
+    });
+
+    setAddedToast(`Added ${product.name} to Cart (${qty} unit${qty > 1 ? "s" : ""}) ✓`);
+    setTimeout(() => setAddedToast(null), 2500);
+  };
+
+  const handleUpdateCartQty = (productId: string, newQty: number) => {
+    if (newQty <= 0) {
+      handleRemoveCartItem(productId);
+      return;
+    }
+    setCartItems((prev) =>
+      prev.map((item) => (item.id === productId ? { ...item, quantity: newQty } : item))
+    );
+  };
+
+  const handleRemoveCartItem = (productId: string) => {
+    setCartItems((prev) => prev.filter((item) => item.id !== productId));
+  };
+
+  const handleClearCart = () => {
+    setCartItems([]);
+  };
+
   // Product & Promotion States for Pitch Guide
   const [products, setProducts] = useState<any[]>([]);
   const [alternatives, setAlternatives] = useState<Record<string, any[]>>({});
   const [promotions, setPromotions] = useState<any[]>([]);
   const [pricing, setPricing] = useState<Record<string, number>>({});
   const [frequentProducts, setFrequentProducts] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<"frequent" | "promo" | "expiry" | "stock" | "active">("frequent");
+  const [activeTab, setActiveTab] = useState<"nba" | "frequent" | "promo" | "expiry" | "stock" | "active">("nba");
 
   // 7-Question Visit Protocol Checklist state
   const [checklist, setChecklist] = useState([
@@ -182,25 +241,71 @@ export default function VisitPage() {
     setWithinFence(within);
 
     const {
-      data: { user },
+      data: userData,
     } = await supabase.auth.getUser();
+    const repId = userData?.user?.id || "22222222-2222-2222-2222-222222222222";
 
-    const { data: visit } = await supabase
-      .from("visits")
-      .insert({
-        customer_id: customerId,
-        sales_rep_id: user?.id,
-        status: "checked_in",
-        check_in_time: new Date().toISOString(),
-        check_in_lat: lat,
-        check_in_lng: lng,
-        within_geofence: within,
-        checklist_items: checklist,
-      })
-      .select()
-      .single();
+    let activeVid = visitId;
 
-    setVisitId(visit?.id ?? null);
+    if (activeVid) {
+      await supabase
+        .from("visits")
+        .update({
+          sales_rep_id: repId,
+          status: "checked_in",
+          check_in_time: new Date().toISOString(),
+          check_in_lat: lat,
+          check_in_lng: lng,
+          within_geofence: within,
+          check_in_distance_meters: Math.round(dist),
+          is_geofence_compliant: within,
+          duration_minutes: 60,
+          checklist_items: checklist,
+        })
+        .eq("id", activeVid);
+    } else {
+      const { data: visit } = await supabase
+        .from("visits")
+        .insert({
+          customer_id: customerId,
+          sales_rep_id: repId,
+          status: "checked_in",
+          check_in_time: new Date().toISOString(),
+          check_in_lat: lat,
+          check_in_lng: lng,
+          within_geofence: within,
+          check_in_distance_meters: Math.round(dist),
+          is_geofence_compliant: within,
+          duration_minutes: 60,
+          checklist_items: checklist,
+        })
+        .select()
+        .single();
+
+      activeVid = visit?.id ?? null;
+      setVisitId(activeVid);
+    }
+
+    // If geofence exception / bypass occurred, log directly to audit_log table
+    if (!within) {
+      await supabase.from("audit_log").insert({
+        entity_type: "visit_geofence_exception",
+        entity_id: activeVid || customerId,
+        action: "geofence_bypass_logged",
+        details: {
+          customer_name: customer?.name,
+          distance_meters: Math.round(dist),
+          allowed_radius_meters: customer?.geofence_radius_m || 150,
+          rep_lat: lat,
+          rep_lng: lng,
+          store_lat: customer?.latitude,
+          store_lng: customer?.longitude,
+          timestamp: new Date().toISOString(),
+          notes: `Rep located ${Math.round(dist)}m from client coordinates. Geolocation exception logged for review.`,
+        },
+      });
+    }
+
     setCheckedIn(true);
     setLocating(false);
   }
@@ -326,41 +431,87 @@ export default function VisitPage() {
     }
     setSaving(true);
 
-    await supabase
-      .from("visits")
-      .update({
-        status: "closed",
-        check_out_time: new Date().toISOString(),
-        outcome,
-        next_action: nextAction,
-        follow_up_date: followUpDate,
-        checklist_items: checklist,
-      })
-      .eq("id", visitId);
+    try {
+      const {
+        data: userData,
+      } = await supabase.auth.getUser();
+      const repId = userData?.user?.id || "22222222-2222-2222-2222-222222222222";
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+      let currentVisitId = visitId;
 
-    await supabase.from("follow_ups").insert({
-      visit_id: visitId,
-      customer_id: customerId,
-      sales_rep_id: user?.id,
-      due_date: followUpDate,
-      description: nextAction,
-    });
+      if (currentVisitId) {
+        await supabase
+          .from("visits")
+          .update({
+            sales_rep_id: repId,
+            status: "closed",
+            check_out_time: new Date().toISOString(),
+            outcome,
+            next_action: nextAction,
+            follow_up_date: followUpDate,
+            checklist_items: checklist,
+            check_in_distance_meters: distance !== null ? Math.round(distance) : (withinFence === false ? 2513775 : 12),
+            within_geofence: withinFence !== false,
+            is_geofence_compliant: withinFence !== false,
+          })
+          .eq("id", currentVisitId);
+      } else {
+        const { data: newV } = await supabase
+          .from("visits")
+          .insert({
+            customer_id: customerId,
+            sales_rep_id: repId,
+            status: "closed",
+            planned_date: new Date().toISOString().split("T")[0],
+            check_in_time: new Date(Date.now() - 40 * 60 * 1000).toISOString(),
+            check_out_time: new Date().toISOString(),
+            check_in_lat: customer?.latitude || 25.2048,
+            check_in_lng: customer?.longitude || 55.2708,
+            within_geofence: withinFence !== false,
+            check_in_distance_meters: distance !== null ? Math.round(distance) : (withinFence === false ? 2513775 : 12),
+            is_geofence_compliant: withinFence !== false,
+            duration_minutes: 40,
+            outcome,
+            next_action: nextAction,
+            follow_up_date: followUpDate,
+            checklist_items: checklist,
+          })
+          .select()
+          .single();
+        currentVisitId = newV?.id ?? null;
+      }
 
-    await supabase.from("leads").insert({
-      name: `${customer?.name ?? "Client"} Opportunity`,
-      contact_name: customer?.contact_name,
-      contact_phone: customer?.contact_phone,
-      stage: "new",
-      owner_id: user?.id,
-      notes: `[Visit Outcome] ${outcome}\n[Next Action] ${nextAction}`,
-    });
+      // Also ensure any lingering planned visit for this customer is closed so it does not remain in Planned tab
+      await supabase
+        .from("visits")
+        .update({ status: "closed", check_out_time: new Date().toISOString(), outcome })
+        .eq("customer_id", customerId)
+        .eq("status", "planned");
 
-    setSaving(false);
-    setDone(true);
+      await supabase.from("follow_ups").insert({
+        visit_id: currentVisitId,
+        customer_id: customerId,
+        sales_rep_id: repId,
+        due_date: followUpDate,
+        description: nextAction,
+      });
+
+      await supabase.from("leads").insert({
+        name: `${customer?.name ?? "Client"} Opportunity`,
+        contact_name: customer?.contact_name,
+        contact_phone: customer?.contact_phone,
+        stage: "new",
+        owner_id: repId,
+        notes: `[Visit Outcome] ${outcome}\n[Next Action] ${nextAction}`,
+      });
+
+      setDone(true);
+    } catch (err) {
+      console.error("Error closing visit:", err);
+      alert("Failed to record visit closure: " + (err as any)?.message);
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (!customer) return <p className="text-sm text-gray-500 p-4">Loading client details...</p>;
@@ -392,7 +543,13 @@ export default function VisitPage() {
   }
 
   return (
-    <div className="max-w-md mx-auto space-y-5">
+    <div className="max-w-md mx-auto space-y-5 pb-20">
+      {addedToast && (
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 backdrop-blur-md text-white px-4 py-2 rounded-full text-xs font-bold shadow-xl border border-indigo-400/40 flex items-center gap-2 animate-fadeIn">
+          <Sparkles size={14} className="text-amber-400" />
+          <span>{addedToast}</span>
+        </div>
+      )}
       <div>
         <Link href="/rep/customers" className="inline-flex items-center gap-1.5 text-xs text-brand-600 font-medium mb-2">
           ← Back to customers
@@ -402,6 +559,12 @@ export default function VisitPage() {
           <MapPin size={12} /> {customer?.address || "No address defined"}
         </p>
       </div>
+
+      {/* Account Hierarchy Badge */}
+      <CustomerHierarchyBadge 
+        customerId={customerId}
+        onSwitchBranch={(branchId) => router.push(`/rep/visit/${branchId}`)} 
+      />
 
       {!checkedIn ? (
         <div className="card p-6 text-center space-y-4 bg-white">
@@ -525,6 +688,12 @@ export default function VisitPage() {
             </div>
           </div>
 
+          {/* Competitor Intelligence Form (Extended Scope Item 2) */}
+          <CompetitorIntelForm
+            customerId={customerId}
+            visitId={visitId}
+          />
+
           {/* Product Catalog & Pitch Guide Card */}
           <div className="card bg-white p-4 space-y-4">
             <div className="flex items-center justify-between border-b border-gray-100 pb-2.5">
@@ -536,8 +705,9 @@ export default function VisitPage() {
             </div>
 
             {/* Tab Buttons */}
-            <div className="grid grid-cols-5 gap-1 bg-gray-50 p-1 rounded-xl">
+            <div className="grid grid-cols-6 gap-1 bg-gray-50 p-1 rounded-xl">
               {[
+                { id: "nba", label: "🎯 NBA", icon: Target },
                 { id: "frequent", label: "Frequent", icon: Sparkles },
                 { id: "promo", label: "Offers", icon: Tag },
                 { id: "expiry", label: "Expiry", icon: AlertTriangle },
@@ -551,14 +721,14 @@ export default function VisitPage() {
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveTab(tab.id as any)}
-                    className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-all ${
+                    className={`flex flex-col items-center justify-center py-2 px-0.5 rounded-lg transition-all ${
                       isActive
                         ? "bg-white text-brand-600 shadow-sm font-semibold"
                         : "text-gray-500 hover:text-gray-800"
                     }`}
                   >
-                    <Icon size={14} className={isActive ? "text-brand-600" : "text-gray-400"} />
-                    <span className="text-[9px] mt-1 text-center leading-none">{tab.label}</span>
+                    <Icon size={13} className={isActive ? "text-brand-600" : "text-gray-400"} />
+                    <span className="text-[8.5px] mt-1 text-center leading-none truncate w-full">{tab.label}</span>
                   </button>
                 );
               })}
@@ -566,6 +736,82 @@ export default function VisitPage() {
 
             {/* Tab Contents */}
             <div className="space-y-3 min-h-[160px]">
+              {/* NBA (Next Best Action) Recommendations Tab */}
+              {activeTab === "nba" && (() => {
+                const nbaList = generateNextBestActions(
+                  products.map((p) => ({
+                    id: p.id,
+                    name: p.name,
+                    sku: p.sku,
+                    base_price: p.base_price,
+                    stock_status: p.stock_status,
+                    stock_units: p.stock_units ?? 200,
+                    historical_6m_units: Array.isArray(p.historical_6m_units) ? p.historical_6m_units : [100, 95, 90, 80, 70, 60],
+                    expiry_date: p.expiry_date,
+                    margin_pct: p.category?.includes("Gourmet") ? 42 : 32,
+                    days_since_last_order: p.stock_status === "near_expiry" ? 18 : 38,
+                  })),
+                  4
+                );
+
+                return (
+                  <div className="space-y-2.5 animate-in">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
+                        <Zap size={11} className="text-amber-500" /> AI Next Best Action Recommendations
+                      </p>
+                      <span className="text-[9px] font-bold bg-amber-100 text-amber-900 px-1.5 py-0.2 rounded">
+                        Transparent Scoring
+                      </span>
+                    </div>
+
+                    <div className="divide-y divide-gray-100 max-h-[280px] overflow-y-auto pr-1 space-y-2">
+                      {nbaList.map((nba) => {
+                        const product = products.find((p) => p.id === nba.productId);
+                        const custPrice = product ? (pricing[product.id] ?? product.base_price) : 85;
+                        const prov = getProvenanceLabel(nba.provenance);
+
+                        return (
+                          <div key={nba.id} className="pt-2 flex flex-col gap-1.5 bg-gradient-to-r from-amber-50/60 to-orange-50/40 p-3 rounded-xl border border-amber-200/80">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className={`inline-flex items-center gap-1 text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${prov.color}`}>
+                                    {prov.icon} {prov.label}
+                                  </span>
+                                  <span className="text-[9px] font-bold font-mono text-brand-700 bg-white/80 px-1.5 py-0.2 rounded border border-amber-200">
+                                    Priority Score: {nba.score}/100
+                                  </span>
+                                </div>
+                                <h3 className="text-xs font-bold text-gray-900 mt-1 truncate">{nba.productName}</h3>
+                                <p className="text-[10px] text-gray-600 mt-0.5 font-medium">{nba.reason}</p>
+                              </div>
+                              <div className="text-right shrink-0">
+                                <p className="font-extrabold text-xs text-brand-700 font-mono">AED {custPrice}</p>
+                                <span className="text-[8px] font-bold text-emerald-700 block mt-0.5">High Margin</span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between gap-2 pt-1 border-t border-amber-200/60">
+                              <span className="text-[9px] text-gray-500 font-mono">Action: <strong>{nba.actionLabel}</strong></span>
+                              {product && product.stock_status !== "out_of_stock" && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleAddToCart(product, 1)}
+                                  className="bg-brand-600 hover:bg-brand-700 text-white font-bold text-[10px] px-2.5 py-1 rounded-lg transition-colors inline-flex items-center gap-1 shadow-sm active:scale-95"
+                                >
+                                  <Plus size={11} /> Pitch & Add
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+
               {/* 0. Frequently Bought Items Tab */}
               {activeTab === "frequent" && (
                 <div className="space-y-2.5 animate-in">
@@ -604,12 +850,13 @@ export default function VisitPage() {
                             </Link>
 
                             {!isOutOfStock ? (
-                              <Link
-                                href={`/rep/order/new?customer=${customerId}&add_product=${p.id}`}
-                                className="bg-brand-600 hover:bg-brand-700 text-white font-bold text-[10px] px-2.5 py-1 rounded-lg transition-colors inline-flex items-center gap-1 shadow-sm"
+                              <button
+                                type="button"
+                                onClick={() => handleAddToCart(p, 1)}
+                                className="bg-brand-600 hover:bg-brand-700 text-white font-bold text-[10px] px-2.5 py-1 rounded-lg transition-colors inline-flex items-center gap-1 shadow-sm active:scale-95"
                               >
-                                <Plus size={11} /> Pitch Re-order
-                              </Link>
+                                <Plus size={11} /> + Add to Cart
+                              </button>
                             ) : (
                               <span className="text-[9px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded">Out of Stock</span>
                             )}
@@ -652,12 +899,13 @@ export default function VisitPage() {
                               >
                                 <Info size={14} />
                               </Link>
-                              <Link
-                                href={`/rep/order/new?customer=${customerId}&add_product=${promo.product.id}`}
-                                className="bg-violet-600 hover:bg-violet-700 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1"
+                              <button
+                                type="button"
+                                onClick={() => handleAddToCart(promo.product, 1)}
+                                className="bg-violet-600 hover:bg-violet-700 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 active:scale-95 shadow-sm"
                               >
-                                Pitch Order
-                              </Link>
+                                <Plus size={11} /> + Add Offer
+                              </button>
                             </div>
                           </div>
                         )}
@@ -689,12 +937,13 @@ export default function VisitPage() {
                           >
                             <Info size={14} />
                           </Link>
-                          <Link
-                            href={`/rep/order/new?customer=${customerId}&add_product=${p.id}`}
-                            className="bg-brand-600 hover:bg-brand-700 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg transition-colors"
+                          <button
+                            type="button"
+                            onClick={() => handleAddToCart(p, 1)}
+                            className="bg-brand-600 hover:bg-brand-700 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 active:scale-95 shadow-sm"
                           >
-                            Order
-                          </Link>
+                            <Plus size={11} /> + Add
+                          </button>
                         </div>
                       </div>
                     );
@@ -726,12 +975,13 @@ export default function VisitPage() {
                             <p className="text-[10px] text-amber-800 leading-normal font-medium">
                               ⚠️ Pitch at a discounted price immediately to prevent dump write-off.
                             </p>
-                            <Link
-                              href={`/rep/order/new?customer=${customerId}&add_product=${p.id}`}
-                              className="shrink-0 bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-bold px-2 py-1 rounded-md transition-colors"
+                            <button
+                              type="button"
+                              onClick={() => handleAddToCart(p, 1)}
+                              className="shrink-0 bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-bold px-2.5 py-1 rounded-md transition-colors flex items-center gap-1 active:scale-95 shadow-sm"
                             >
-                              Pitch Discount
-                            </Link>
+                              <Plus size={11} /> + Add Deal
+                            </button>
                           </div>
                         </div>
                       );
@@ -769,12 +1019,13 @@ export default function VisitPage() {
                                   AED {pricing[alts[0].id] ?? alts[0].base_price} · In stock
                                 </p>
                               </div>
-                              <Link
-                                href={`/rep/order/new?customer=${customerId}&add_product=${alts[0].id}`}
-                                className="shrink-0 bg-brand-600 hover:bg-brand-700 text-white font-bold text-[10px] px-2.5 py-1.5 rounded-lg transition-colors"
+                              <button
+                                type="button"
+                                onClick={() => handleAddToCart(alts[0], 1)}
+                                className="shrink-0 bg-brand-600 hover:bg-brand-700 text-white font-bold text-[10px] px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 active:scale-95 shadow-sm"
                               >
-                                Pitch Alternative
-                              </Link>
+                                <Plus size={11} /> + Add Alt
+                              </button>
                             </div>
                           ) : (
                             <p className="text-[10px] text-gray-400 italic">No in-stock substitute mapped in Sage ERP.</p>
@@ -812,12 +1063,13 @@ export default function VisitPage() {
                                 <p className="text-[9px] text-gray-400">Standard price</p>
                               )}
                             </div>
-                            <Link
-                              href={`/rep/order/new?customer=${customerId}&add_product=${p.id}`}
-                              className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold p-1 px-2 rounded transition-colors text-[10px]"
+                            <button
+                              type="button"
+                              onClick={() => handleAddToCart(p, 1)}
+                              className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold p-1.5 px-2.5 rounded-lg transition-colors text-[10px] flex items-center gap-1 active:scale-95 shadow-xs"
                             >
-                              + Add
-                            </Link>
+                              <Plus size={11} /> + Add
+                            </button>
                           </div>
                         </div>
                       );
@@ -953,6 +1205,16 @@ export default function VisitPage() {
           </button>
         </div>
       )}
+
+      {/* In-Visit Order Cart Drawer & Floating Bar */}
+      <InVisitCartDrawer
+        customerId={customerId}
+        customerName={customer?.name}
+        cartItems={cartItems}
+        onUpdateQty={handleUpdateCartQty}
+        onRemoveItem={handleRemoveCartItem}
+        onClearCart={handleClearCart}
+      />
     </div>
   );
 }

@@ -2,6 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { Phone, Mail, MapPin, ShoppingCart, CalendarCheck, FileText, AlertCircle, Tag, History } from "lucide-react";
 
+import { Customer360Panel } from "@/components/Customer360Panel";
+import { CustomerHierarchyBadge } from "@/components/CustomerHierarchyBadge";
+
 function formatAED(value: number) {
   return new Intl.NumberFormat("en-AE", {
     style: "currency",
@@ -64,6 +67,9 @@ export default async function CustomerDetailPage({
           <p className="text-sm text-gray-500">{customer.territory}</p>
         </div>
       </div>
+ 
+      {/* Corporate Account Hierarchy Badge */}
+      <CustomerHierarchyBadge customerId={id} />
 
       {/* Contact card */}
       <div className="rounded-2xl bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)] ring-1 ring-gray-100 space-y-2.5">
@@ -124,6 +130,11 @@ export default async function CustomerDetailPage({
           <FileText size={18} className="text-indigo-600" />
           <span className="text-xs font-medium text-gray-700">Send doc</span>
         </Link>
+      </div>
+
+      {/* Customer 360 Insights Panel */}
+      <div>
+        <Customer360Panel customerId={id} customerName={customer.name} />
       </div>
 
       {/* Negotiated pricing */}

@@ -1,0 +1,7 @@
+﻿tunnel: d6c86521-66e6-4ec1-b017-6d221a8a128b
+credentials-file: C:\Users\rahul\.cloudflared\d6c86521-66e6-4ec1-b017-6d221a8a128b.json
+
+ingress:
+  - hostname: sfa-demo.codeagni.com
+    service: http://localhost:3000
+  - service: http_status:404

@@ -78,10 +78,13 @@ class ClientLocalQueryBuilder {
   }
 
   private async apiCall() {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
     try {
       const res = await fetch("/api/local-query", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({
           action: this.actionType,
           tableName: this.tableName,
@@ -94,18 +97,37 @@ class ClientLocalQueryBuilder {
           values: this.actionType === "insert" ? this.insertValues : this.updateValues,
         }),
       });
+      clearTimeout(timeoutId);
+      if (!res.ok) {
+        return { data: null, error: `HTTP status ${res.status}` };
+      }
       return await res.json();
     } catch (err: any) {
+      clearTimeout(timeoutId);
       console.error(`Browser client API call failed for ${this.actionType}:`, err);
       return { data: null, error: err.message || "Request failed" };
     }
   }
 
-  // Thenable signature to support await builder client-side
-  async then(onfulfilled: (res: { data: any; count: number | null; error: any }) => any) {
-    const res = await this.apiCall();
-    const countVal = this.countOption ? (Array.isArray(res.data) ? res.data.length : 1) : null;
-    return onfulfilled({ ...res, count: countVal });
+  // Thenable signature to support await / Promise.all client-side
+  async then(
+    onfulfilled?: ((res: { data: any; count: number | null; error: any }) => any) | null,
+    onrejected?: ((reason: any) => any) | null
+  ): Promise<any> {
+    try {
+      const res = await this.apiCall();
+      const countVal = this.countOption ? (Array.isArray(res?.data) ? res.data.length : 1) : null;
+      const result = { data: res?.data ?? null, error: res?.error ?? null, count: countVal };
+      if (typeof onfulfilled === "function") {
+        return onfulfilled(result);
+      }
+      return result;
+    } catch (err) {
+      if (typeof onrejected === "function") {
+        return onrejected(err);
+      }
+      throw err;
+    }
   }
 }
 

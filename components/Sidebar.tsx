@@ -21,10 +21,11 @@ import {
   X,
   Package,
   TrendingUp,
+  BarChart3,
 } from "lucide-react";
 
 interface SidebarProps {
-  role: "Manager" | "Sales Rep" | string;
+  role: string;
   userName: string;
   initials: string;
   signOutAction: () => Promise<void>;

@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { getCrossSellRecommendations, type CrossSellRule } from "@/lib/data/analyticsEngine";
+
+import { useEffect, useState, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -11,8 +13,29 @@ import {
   Tag,
   ShoppingCart,
   Check,
+  CheckCircle2,
   Clock,
+  Building2,
+  Network,
+  CreditCard,
+  Truck,
+  FileCheck,
+  ChevronRight,
+  ShieldCheck,
+  Building,
+  Store,
+  Layers,
+  MapPin
 } from "lucide-react";
+import { AccountHierarchySelector } from "@/components/AccountHierarchySelector";
+import { CustomerHierarchyBadge } from "@/components/CustomerHierarchyBadge";
+import { 
+  getAccountHierarchy, 
+  validateOrderCredit, 
+  CORPORATE_GROUPS,
+  HierarchyBranchNode,
+  CorporateGroup 
+} from "@/lib/hierarchy/accountHierarchy";
 
 interface CartLine {
   product_id: string;
@@ -29,17 +52,33 @@ export default function NewOrderPage() {
   const preselectedCustomer = searchParams.get("customer");
 
   const [customers, setCustomers] = useState<any[]>([]);
-  const [customerId, setCustomerId] = useState(preselectedCustomer ?? "");
+  const [customerId, setCustomerId] = useState(preselectedCustomer ?? "c1111111-0000-0000-0000-000000000001");
+  const [billingAccountId, setBillingAccountId] = useState<string>("grp-al-maya");
+  const [deliveryAccountId, setDeliveryAccountId] = useState<string>(preselectedCustomer ?? "c1111111-0000-0000-0000-000000000001");
+  const [useConsolidatedCredit, setUseConsolidatedCredit] = useState(true);
+  const [showHierarchyDetails, setShowHierarchyDetails] = useState(true);
+
   const [products, setProducts] = useState<any[]>([]);
   const [pricing, setPricing] = useState<Record<string, number>>({});
   const [alternatives, setAlternatives] = useState<Record<string, any[]>>({});
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [cart, setCart] = useState<Record<string, CartLine>>({});
   const [frequentProducts, setFrequentProducts] = useState<any[]>([]);
+
+  // Market Basket Cross-Sell
+  const crossSellRules = useMemo(() => {
+    return getCrossSellRecommendations(Object.keys(cart), 3);
+  }, [Object.keys(cart).join(",")]);
   const [submitting, setSubmitting] = useState(false);
   const [discountFor, setDiscountFor] = useState<string | null>(null);
   const [discountPrice, setDiscountPrice] = useState("");
   const [discountReason, setDiscountReason] = useState("");
+
+  // Animation and Feedback States
+  const [recentlyAddedId, setRecentlyAddedId] = useState<string | null>(null);
+  const [cartBouncing, setCartBouncing] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
 
   useEffect(() => {
     if (!customerId || products.length === 0) {
@@ -48,15 +87,24 @@ export default function NewOrderPage() {
     }
 
     supabase
-      .from("order_items")
-      .select("product_id, quantity, order:orders!inner(customer_id)")
-      .eq("order.customer_id", customerId)
-      .then(({ data }) => {
+      .from("orders")
+      .select("id")
+      .eq("customer_id", customerId)
+      .then(async ({ data: orders }) => {
+        const orderIds = (orders || []).map((o: any) => o.id);
         const counts: Record<string, number> = {};
-        if (data && data.length > 0) {
-          data.forEach((item: any) => {
-            counts[item.product_id] = (counts[item.product_id] || 0) + (item.quantity || 1);
-          });
+
+        if (orderIds.length > 0) {
+          const { data: items } = await supabase
+            .from("order_items")
+            .select("product_id, quantity")
+            .in("order_id", orderIds);
+
+          if (items && items.length > 0) {
+            items.forEach((item: any) => {
+              counts[item.product_id] = (counts[item.product_id] || 0) + (item.quantity || 1);
+            });
+          }
         }
 
         // Sort strictly by highest total units ordered first (DB order_items + 6-month historical run-rate)
@@ -175,8 +223,31 @@ export default function NewOrderPage() {
     });
   }, [discountRequests, pricing, products]);
 
-  function addToCart(product: any) {
+  function addToCart(product: any, isSubstitute = false) {
     if (product.stock_status === "out_of_stock") return;
+
+    // Trigger instant button animation
+    setRecentlyAddedId(product.id);
+    setTimeout(() => {
+      setRecentlyAddedId(null);
+    }, 1600);
+
+    // Trigger cart bounce animation
+    setCartBouncing(true);
+    setTimeout(() => {
+      setCartBouncing(false);
+    }, 800);
+
+    // Trigger toast notification
+    setToastMessage(
+      isSubstitute
+        ? `✓ Added substitute: ${product.name}`
+        : `✓ Added ${product.name} to cart`
+    );
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 2500);
+
     setCart((prev) => {
       const existing = prev[product.id];
       return {
@@ -331,23 +402,259 @@ export default function NewOrderPage() {
           <p className="text-xs text-[#9A988C] mt-1">Select a customer, then build the order line by line.</p>
         </div>
 
-        {/* Customer Picker */}
-        <div className="rounded-md bg-white p-4 ring-1 ring-[#E7E2D9] space-y-2">
-          <label className="text-[10px] font-bold uppercase tracking-wider text-[#9A988C] block">
-            Customer account
-          </label>
-          <select
-            className="w-full h-10 rounded-sm border border-[#E7E2D9] bg-[#FDFCFA] px-3 text-sm text-[#1C2321] focus:outline-none focus:ring-1 focus:ring-[#B8622A] focus:border-[#B8622A]"
-            value={customerId}
-            onChange={(e) => setCustomerId(e.target.value)}
-          >
-            <option value="">Choose a customer...</option>
-            {customers.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+        {/* Account Hierarchy & Customer Selector */}
+        <div className="space-y-3">
+          <AccountHierarchySelector
+            selectedAccountId={customerId}
+            onSelectAccount={(branch, group) => {
+              setCustomerId(branch.id);
+              setDeliveryAccountId(branch.id);
+              setBillingAccountId(group.group_id);
+            }}
+          />
+
+          {/* Account Hierarchy & Multi-Tier Credit Engine Details */}
+          {customerId && (() => {
+            const context = getAccountHierarchy(customerId);
+            const activeGroup = context.group;
+            const activeBranch = context.currentBranch;
+            const creditValidation = validateOrderCredit(customerId, total, useConsolidatedCredit);
+
+            function formatAED(value: number) {
+              return new Intl.NumberFormat("en-AE", {
+                style: "currency",
+                currency: "AED",
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+              }).format(value);
+            }
+
+            return (
+              <div className="rounded-xl bg-white border border-[#E7E2D9] p-4 shadow-2xs space-y-4">
+                <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="text-indigo-600" size={18} />
+                    <div>
+                      <h2 className="text-xs font-extrabold uppercase tracking-wider text-gray-900">
+                        Corporate Hierarchy & Multi-Tier Credit Control
+                      </h2>
+                      <p className="text-[11px] text-gray-500">
+                        {activeGroup.group_name} · Linked to {activeGroup.branches.length} Retail Outlets
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowHierarchyDetails(!showHierarchyDetails)}
+                    className="text-[11px] font-bold text-indigo-600 hover:underline"
+                  >
+                    {showHierarchyDetails ? "Collapse Configuration ▴" : "Expand Configuration ▾"}
+                  </button>
+                </div>
+
+                {showHierarchyDetails && (
+                  <div className="space-y-4 animate-in fade-in duration-200">
+                    {/* Split Invoicing & Delivery Point Configuration */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {/* Invoicing / Billing Entity */}
+                      <div className="bg-slate-50 rounded-xl p-3 border border-slate-200/90 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-600 flex items-center gap-1.5">
+                            <FileCheck size={13} className="text-indigo-600" />
+                            Invoicing / Billing Entity
+                          </span>
+                          <span className="text-[9px] font-extrabold bg-indigo-100 text-indigo-800 px-1.5 py-0.2 rounded">
+                            Contract Invoice
+                          </span>
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="flex items-center gap-2 text-xs font-semibold text-gray-800 cursor-pointer p-1.5 bg-white rounded-lg border border-gray-200 hover:border-indigo-300">
+                            <input
+                              type="radio"
+                              name="billing_scope"
+                              checked={useConsolidatedCredit}
+                              onChange={() => {
+                                setUseConsolidatedCredit(true);
+                                setBillingAccountId(activeGroup.group_id);
+                              }}
+                              className="text-indigo-600 focus:ring-indigo-500"
+                            />
+                            <div className="min-w-0">
+                              <p className="font-bold text-gray-900 truncate">Parent HQ: {activeGroup.group_name}</p>
+                              <p className="text-[10px] text-gray-500">Consolidated terms ({activeGroup.payment_terms})</p>
+                            </div>
+                          </label>
+
+                          <label className="flex items-center gap-2 text-xs font-semibold text-gray-800 cursor-pointer p-1.5 bg-white rounded-lg border border-gray-200 hover:border-indigo-300">
+                            <input
+                              type="radio"
+                              name="billing_scope"
+                              checked={!useConsolidatedCredit}
+                              onChange={() => {
+                                setUseConsolidatedCredit(false);
+                                setBillingAccountId(activeBranch.id);
+                              }}
+                              className="text-indigo-600 focus:ring-indigo-500"
+                            />
+                            <div className="min-w-0">
+                              <p className="font-bold text-gray-900 truncate">Branch Billing: {activeBranch.name}</p>
+                              <p className="text-[10px] text-gray-500">Individual branch ledger</p>
+                            </div>
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* Delivery Destination (Shipping Point) */}
+                      <div className="bg-slate-50 rounded-xl p-3 border border-slate-200/90 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-600 flex items-center gap-1.5">
+                            <Truck size={13} className="text-emerald-600" />
+                            Delivery Destination Point
+                          </span>
+                          <span className="text-[9px] font-extrabold bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded">
+                            Shipping Drop
+                          </span>
+                        </div>
+                        <div className="space-y-1.5">
+                          <select
+                            value={deliveryAccountId}
+                            onChange={(e) => {
+                              const newId = e.target.value;
+                              setDeliveryAccountId(newId);
+                              setCustomerId(newId);
+                            }}
+                            className="w-full text-xs font-bold text-gray-800 bg-white border border-gray-200 rounded-lg p-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none cursor-pointer"
+                          >
+                            {CORPORATE_GROUPS.map((g) => (
+                              <optgroup key={g.group_id} label={`🏢 ${g.group_name}`}>
+                                {g.branches.map((b) => (
+                                  <option key={b.id} value={b.id}>
+                                    {b.name} ({b.territory})
+                                  </option>
+                                ))}
+                              </optgroup>
+                            ))}
+                          </select>
+                          <p className="text-[10px] text-gray-500 flex items-center gap-1">
+                            <MapPin size={10} className="text-gray-400 shrink-0" />
+                            <span className="truncate">{activeBranch.address}</span>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Real-Time Multi-Tier Credit Validation Banner */}
+                    <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-xl p-3.5 space-y-3 shadow-sm">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-2.5">
+                        <div className="flex items-center gap-2">
+                          <ShieldCheck size={16} className="text-emerald-400" />
+                          <span className="text-xs font-extrabold tracking-wide uppercase">
+                            {useConsolidatedCredit ? "Consolidated Group Credit Engine" : "Individual Branch Credit Engine"}
+                          </span>
+                        </div>
+                        {creditValidation.isApproved ? (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1 self-start sm:self-auto">
+                            <Check size={11} /> Credit Approved · {formatAED(creditValidation.availableCreditAfterOrder)} Available
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-red-500/20 text-red-300 border border-red-500/40 flex items-center gap-1 self-start sm:self-auto">
+                            <AlertCircle size={11} /> Credit Limit Exceeded by {formatAED(creditValidation.exceededAmount)}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+                        <div>
+                          <p className="text-[9px] uppercase font-bold text-indigo-300/80">
+                            {useConsolidatedCredit ? "Group Credit Limit" : "Branch Credit Limit"}
+                          </p>
+                          <p className="font-extrabold text-sm font-mono text-white mt-0.5">
+                            {formatAED(creditValidation.creditLimit)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[9px] uppercase font-bold text-indigo-300/80">Current Open AR</p>
+                          <p className="font-extrabold text-sm font-mono text-indigo-200 mt-0.5">
+                            {formatAED(creditValidation.currentOutstanding)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[9px] uppercase font-bold text-indigo-300/80">Current Cart Impact</p>
+                          <p className="font-extrabold text-sm font-mono text-amber-300 mt-0.5">
+                            + {formatAED(total)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[9px] uppercase font-bold text-indigo-300/80">Post-Order Remaining</p>
+                          <p className={`font-extrabold text-sm font-mono mt-0.5 ${
+                            creditValidation.availableCreditAfterOrder >= 0 ? "text-emerald-400" : "text-red-400"
+                          }`}>
+                            {formatAED(creditValidation.availableCreditAfterOrder)}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Progress Bar */}
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-[9px] text-indigo-200/70 font-mono">
+                          <span>0 AED</span>
+                          <span>Utilization: {creditValidation.utilizationPctAfter}%</span>
+                          <span>{formatAED(creditValidation.creditLimit)}</span>
+                        </div>
+                        <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ${
+                              creditValidation.utilizationPctAfter > 90
+                                ? "bg-red-500"
+                                : creditValidation.utilizationPctAfter > 75
+                                ? "bg-amber-400"
+                                : "bg-emerald-400"
+                            }`}
+                            style={{ width: `${Math.min(100, creditValidation.utilizationPctAfter)}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Sister Outlets Quick Switch Bar */}
+                    <div className="space-y-1.5">
+                      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                        Sister Branch Outlets in this Corporate Group ({activeGroup.branches.length})
+                      </p>
+                      <div className="flex gap-2 overflow-x-auto pb-1">
+                        {activeGroup.branches.map((b) => {
+                          const isCur = b.id === customerId;
+                          return (
+                            <button
+                              key={b.id}
+                              type="button"
+                              onClick={() => {
+                                setCustomerId(b.id);
+                                setDeliveryAccountId(b.id);
+                              }}
+                              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold shrink-0 transition-all border text-left flex items-center gap-1.5 ${
+                                isCur
+                                  ? "bg-indigo-600 text-white border-indigo-700 shadow-xs"
+                                  : "bg-white text-gray-700 border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/50"
+                              }`}
+                            >
+                              <Store size={12} className={isCur ? "text-white" : "text-indigo-600"} />
+                              <span>{b.name.split(" (")[0]}</span>
+                              <span className={`text-[9px] px-1 py-0.2 rounded font-mono ${
+                                isCur ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500"
+                              }`}>
+                                {b.city}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
 
         {customerId && (
@@ -494,28 +801,91 @@ export default function NewOrderPage() {
                       )}
 
                       {/* Scenario 4: Stock / alternative suggestion block */}
-                      {isOutOfStock && alternatives[p.id]?.length > 0 && (
-                        <div className="bg-[#FBEEDD] rounded-sm p-3 border border-[#EDCFA3] space-y-2">
-                          <p className="text-[10px] font-bold uppercase tracking-wide text-[#8A5620] flex items-center gap-1">
-                            <AlertCircle size={12} /> Substitute available
-                          </p>
-                          <div className="flex items-center justify-between gap-2 bg-white p-2.5 rounded-sm border border-[#EDCFA3]">
-                            <div className="min-w-0">
-                              <p className="text-xs font-semibold text-[#1C2321] truncate">{alternatives[p.id][0].name}</p>
-                              <p className="text-[10px] text-[#9A988C] mt-0.5 font-mono">
-                                AED {alternatives[p.id][0].base_price} · In stock
+                      {isOutOfStock && alternatives[p.id]?.length > 0 && (() => {
+                        const altProduct = alternatives[p.id][0];
+                        const altInCart = cart[altProduct.id];
+                        const isJustAdded = recentlyAddedId === altProduct.id;
+
+                        return (
+                          <div className={`rounded-xl p-3.5 border transition-all duration-300 space-y-2.5 ${
+                            altInCart
+                              ? "bg-emerald-50/80 border-emerald-300 ring-2 ring-emerald-100"
+                              : "bg-[#FBEEDD]/90 border-[#EDCFA3]"
+                          }`}>
+                            <div className="flex items-center justify-between">
+                              <p className={`text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1.5 ${
+                                altInCart ? "text-emerald-800" : "text-[#8A5620]"
+                              }`}>
+                                <AlertCircle size={13} className={altInCart ? "text-emerald-600" : "text-[#8A5620]"} />
+                                <span>Substitute Available</span>
                               </p>
+                              {altInCart && (
+                                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/90 border border-emerald-300 px-2 py-0.5 rounded-full flex items-center gap-1 animate-in fade-in zoom-in-95">
+                                  <Check size={11} /> In Cart ({altInCart.quantity})
+                                </span>
+                              )}
                             </div>
-                            <button
-                              type="button"
-                              className="shrink-0 bg-[#1C2321] hover:bg-[#2A322E] text-white font-bold text-[10px] px-2.5 py-1.5 rounded-sm transition-colors"
-                              onClick={() => addToCart(alternatives[p.id][0])}
-                            >
-                              Add
-                            </button>
+
+                            <div className="flex items-center justify-between gap-3 bg-white p-3 rounded-lg border border-slate-200/90 shadow-2xs">
+                              <div className="min-w-0">
+                                <p className="text-xs font-bold text-[#1C2321] truncate">{altProduct.name}</p>
+                                <p className="text-[11px] text-[#6B6A63] mt-0.5 font-mono flex items-center gap-2">
+                                  <strong className="text-emerald-700 font-extrabold">AED {priceFor(altProduct)}</strong>
+                                  <span className="text-emerald-600 font-semibold text-[10px] bg-emerald-50 px-1.5 py-0.2 rounded">✓ In Stock</span>
+                                </p>
+                              </div>
+
+                              <div className="shrink-0 flex items-center gap-1.5">
+                                {altInCart ? (
+                                  <div className="flex items-center gap-1 bg-[#1C2321] text-white rounded-lg p-1 shadow-xs animate-in zoom-in-95">
+                                    <button
+                                      type="button"
+                                      onClick={() => changeQty(altProduct.id, -1)}
+                                      className="p-1 rounded hover:bg-white/20 active:scale-90 transition-all text-white"
+                                      aria-label="Decrease substitute quantity"
+                                    >
+                                      <Minus size={12} />
+                                    </button>
+                                    <span className="text-xs font-bold px-2 font-mono tabular-nums">
+                                      {altInCart.quantity}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => changeQty(altProduct.id, 1)}
+                                      className="p-1 rounded hover:bg-white/20 active:scale-90 transition-all text-white"
+                                      aria-label="Increase substitute quantity"
+                                    >
+                                      <Plus size={12} />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => addToCart(altProduct, true)}
+                                    className={`relative px-3.5 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all duration-200 active:scale-95 ${
+                                      isJustAdded
+                                        ? "bg-emerald-600 text-white scale-105 ring-2 ring-emerald-300 shadow-md"
+                                        : "bg-[#1C2321] hover:bg-[#2A322E] text-white hover:shadow-md"
+                                    }`}
+                                  >
+                                    {isJustAdded ? (
+                                      <>
+                                        <Check size={13} className="animate-bounce" />
+                                        <span>Added!</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Plus size={13} />
+                                        <span>Add Substitute</span>
+                                      </>
+                                    )}
+                                  </button>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        );
+                      })()}
 
                       {/* Special pricing approvals status & details */}
                       {inCart && (() => {
@@ -633,24 +1003,149 @@ export default function NewOrderPage() {
                 </div>
               </div>
             )}
+
+            {/* Market Basket Analysis — Cross-Sell Recommendations */}
+            {crossSellRules.length > 0 && (
+              <div className="space-y-2.5 pt-1">
+                <h2 className="text-sm font-bold text-[#1C2321] flex items-center gap-1.5">
+                  <Layers size={14} className="text-violet-600" /> Customers Also Bought
+                  <span className="text-[9px] font-bold bg-violet-50 text-violet-700 border border-violet-200 px-1.5 py-0.5 rounded-sm uppercase tracking-wider ml-auto">Basket Analysis</span>
+                </h2>
+                <div className="grid grid-cols-1 gap-2">
+                  {crossSellRules.map((rule) => {
+                    const targetProduct = products.find((p: any) => p.id === rule.targetProductId);
+                    const inCartTarget = cart[rule.targetProductId];
+                    if (!targetProduct) return null;
+                    return (
+                      <div
+                        key={rule.id}
+                        className={`rounded-lg p-3 border transition-all ${
+                          inCartTarget
+                            ? "bg-emerald-50/80 border-emerald-300 ring-1 ring-emerald-100"
+                            : "bg-violet-50/50 border-violet-200"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-[8px] font-bold uppercase tracking-wider bg-violet-100 text-violet-800 px-1.5 py-0.5 rounded border border-violet-200">
+                                {rule.provenance === "association_rule" ? "Association Rule" : "Category Affinity"}
+                              </span>
+                              <span className="text-[9px] font-mono text-violet-600">
+                                Confidence: {Math.round(rule.confidence * 100)}% · Lift: {rule.lift.toFixed(1)}x
+                              </span>
+                            </div>
+                            <h3 className="text-xs font-bold text-[#1C2321] mt-1 truncate">{rule.targetProductName}</h3>
+                            <p className="text-[10px] text-[#9A988C] mt-0.5 leading-relaxed line-clamp-2">{rule.reason}</p>
+                          </div>
+                          <div className="shrink-0 text-right">
+                            <p className="text-xs font-bold text-[#1C2321] font-mono">AED {priceFor(targetProduct)}</p>
+                            {inCartTarget ? (
+                              <span className="text-[9px] font-bold text-emerald-700 flex items-center gap-0.5 justify-end mt-0.5">
+                                <Check size={10} /> In Cart ({inCartTarget.quantity})
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => addToCart(targetProduct)}
+                                className="mt-1 bg-violet-600 hover:bg-violet-700 text-white font-bold text-[10px] px-2.5 py-1 rounded transition-colors flex items-center gap-1 active:scale-95"
+                              >
+                                <Plus size={10} /> Add
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
 
+      {/* Floating Feedback Toast */}
+      {toastMessage && (
+        <div className="fixed top-5 right-5 z-50 bg-slate-950 text-white px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 text-xs font-bold border border-slate-800 animate-in slide-in-from-top-4 duration-300">
+          <CheckCircle2 size={16} className="text-emerald-400 shrink-0 animate-bounce" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
       {/* Checkout bar - fixed at bottom of viewport */}
       {Object.keys(cart).length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-20 bg-white ring-1 ring-[#EDCFA3] shadow-[0_-2px_10px_rgba(0,0,0,0.06)]">
+        <div className="fixed bottom-0 left-0 right-0 z-30 bg-white ring-1 ring-[#EDCFA3] shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
+          {/* Expandable Cart Items Modal Drawer */}
+          {isCartDrawerOpen && (
+            <div className="max-w-6xl mx-auto p-4 border-b border-gray-100 bg-[#FAF8F4] max-h-64 overflow-y-auto space-y-2 animate-in slide-in-from-bottom-2">
+              <div className="flex items-center justify-between pb-2 border-b border-gray-200">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-gray-700">
+                  Review Cart Items ({cartCount})
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsCartDrawerOpen(false)}
+                  className="text-xs font-bold text-gray-500 hover:text-gray-900"
+                >
+                  ✕ Close
+                </button>
+              </div>
+
+              <div className="divide-y divide-gray-200/60">
+                {Object.values(cart).map((item: any) => (
+                  <div key={item.product_id} className="py-2 flex items-center justify-between gap-3 text-xs">
+                    <div className="min-w-0">
+                      <p className="font-bold text-gray-900 truncate">{item.name}</p>
+                      <p className="text-[11px] text-gray-500 font-mono">
+                        AED {item.price.toFixed(2)} × {item.quantity} = <strong className="text-gray-900">AED {(item.price * item.quantity).toFixed(2)}</strong>
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1.5 bg-white border border-gray-300 rounded-lg p-0.5 shadow-2xs">
+                      <button
+                        type="button"
+                        onClick={() => changeQty(item.product_id, -1)}
+                        className="p-1 rounded text-gray-600 hover:bg-gray-100 active:scale-90"
+                      >
+                        <Minus size={11} />
+                      </button>
+                      <span className="text-xs font-bold font-mono px-1.5">{item.quantity}</span>
+                      <button
+                        type="button"
+                        onClick={() => changeQty(item.product_id, 1)}
+                        className="p-1 rounded text-gray-600 hover:bg-gray-100 active:scale-90"
+                      >
+                        <Plus size={11} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="max-w-6xl mx-auto p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#FBEEDD] text-[#B8622A] rounded-sm flex items-center justify-center relative">
-                <ShoppingCart size={18} />
-                <span className="absolute -top-1.5 -right-1.5 bg-[#1C2321] text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+            <div className="flex items-center gap-3 cursor-pointer" onClick={() => setIsCartDrawerOpen(!isCartDrawerOpen)}>
+              <div className={`w-11 h-11 rounded-xl flex items-center justify-center relative transition-all duration-300 ${
+                cartBouncing
+                  ? "bg-emerald-500 text-white scale-125 ring-4 ring-emerald-300 shadow-lg"
+                  : "bg-[#FBEEDD] text-[#B8622A] shadow-xs"
+              }`}>
+                <ShoppingCart size={20} className={cartBouncing ? "animate-bounce" : ""} />
+                <span className={`absolute -top-1.5 -right-1.5 text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center transition-all duration-300 ${
+                  cartBouncing ? "bg-emerald-700 scale-125" : "bg-[#1C2321]"
+                }`}>
                   {cartCount}
                 </span>
               </div>
               <div>
-                <p className="text-[10px] text-[#9A988C] font-bold uppercase tracking-wider">Cart total</p>
-                <p className="text-base font-bold text-[#1C2321] mt-0.5 font-mono tabular-nums">
+                <div className="flex items-center gap-1.5">
+                  <p className="text-[10px] text-[#9A988C] font-bold uppercase tracking-wider">Cart Total</p>
+                  <span className="text-[10px] font-bold text-indigo-600 underline">
+                    {isCartDrawerOpen ? "Hide items" : "View items ▾"}
+                  </span>
+                </div>
+                <p className="text-lg font-black text-[#1C2321] mt-0.5 font-mono tabular-nums">
                   AED {total.toLocaleString("en-AE", { minimumFractionDigits: 2 })}
                 </p>
               </div>
@@ -683,14 +1178,14 @@ export default function NewOrderPage() {
                 return null;
               })()}
               <button
-                className={`py-2.5 px-6 font-bold text-sm rounded-sm transition-colors ${hasUnapprovedDiscounts
+                className={`py-2.5 px-6 font-bold text-sm rounded-xl transition-all shadow-md active:scale-95 ${hasUnapprovedDiscounts
                   ? "opacity-50 cursor-not-allowed bg-[#B4B2A9] text-white"
-                  : "bg-[#1C2321] text-white hover:bg-[#2A322E]"
+                  : "bg-[#1C2321] hover:bg-[#2A322E] text-white hover:shadow-lg"
                   }`}
                 onClick={submitOrder}
                 disabled={submitting || hasUnapprovedDiscounts}
               >
-                {submitting ? "Submitting..." : "Submit order"}
+                {submitting ? "Submitting..." : "Submit Order"}
               </button>
             </div>
           </div>

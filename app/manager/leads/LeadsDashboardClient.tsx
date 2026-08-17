@@ -12,6 +12,7 @@ import {
   CheckCircle,
   AlertCircle
 } from "lucide-react";
+import ExportExcelButton from "@/components/ExportExcelButton";
 
 interface Lead {
   id: string;
@@ -114,6 +115,20 @@ export default function LeadsDashboardClient({ initialLeads }: Props) {
             <option value="converted">Converted</option>
             <option value="lost">Lost</option>
           </select>
+          <ExportExcelButton
+            data={filteredLeads.map((l) => ({
+              "Business Lead Name": l.name,
+              "Contact Person": l.contact_name || "—",
+              "Contact Phone": l.contact_phone || "—",
+              "Pipeline Stage": l.stage.toUpperCase(),
+              "Assigned Rep": l.owner?.full_name || "—",
+              "Opportunity Notes": l.notes || "—",
+              "Created Date": formatDate(l.created_at),
+            }))}
+            filename="Business-Leads-Pipeline"
+            sheetName="Leads"
+            label="Export Leads"
+          />
         </div>
       </div>
 

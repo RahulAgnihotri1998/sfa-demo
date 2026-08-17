@@ -14,6 +14,7 @@ import {
   Copy,
   Check,
 } from "lucide-react";
+import { ErpSimulatorWidget } from "@/components/ErpSimulatorWidget";
 
 const STAGES = [
   { key: "captured", label: "Order captured", desc: "Saved to local client cache" },
@@ -239,6 +240,9 @@ export default function OrderStatusPage() {
           </div>
         )}
       </div>
+
+      {/* 2-Way Sage X3 ERP Webhook Simulator */}
+      <ErpSimulatorWidget orderId={id as string} />
 
       {/* Invoice value */}
       <div className="rounded-2xl bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)] ring-1 ring-gray-100 flex items-center justify-between">

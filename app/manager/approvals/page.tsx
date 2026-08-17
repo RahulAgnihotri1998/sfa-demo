@@ -3,6 +3,8 @@
 import { useEffect, useState, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Check, X, Clock, Inbox, Loader2 } from "lucide-react";
+import { ErpSimulatorWidget } from "@/components/ErpSimulatorWidget";
+import ExportExcelButton from "@/components/ExportExcelButton";
 
 type DiscountRequest = {
   id: string;
@@ -132,10 +134,33 @@ export default function ApprovalsPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-8 py-2">
-      <div>
-        <h1 className="text-xl font-semibold text-gray-900">Special pricing approvals</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Review discount requests from your sales team.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900">Special pricing approvals</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Review discount requests from your sales team.</p>
+        </div>
+        <ExportExcelButton
+          data={requests.map((r) => ({
+            "Request ID": r.id,
+            "Sales Rep": r.requester?.full_name || "—",
+            "Customer": r.customer?.name || "—",
+            "Product": r.product?.name || "—",
+            "List Price (AED)": r.product?.base_price || 0,
+            "Requested Price (AED)": r.requested_price,
+            "Discount %": r.product?.base_price ? Number((((r.product.base_price - r.requested_price) / r.product.base_price) * 100).toFixed(1)) : "—",
+            "Approval Status": r.status.toUpperCase(),
+            "Commercial Reason": r.reason || "—",
+            "Requested At": r.created_at,
+            "Decided At": r.decided_at || "—",
+          }))}
+          filename="Special-Pricing-Approval-Requests"
+          sheetName="Approvals"
+          label="Export Approvals"
+        />
       </div>
+
+      {/* 2-Way Sage X3 ERP Webhook Simulator Widget */}
+      <ErpSimulatorWidget discountRequestId={pending[0]?.id} onEventTriggered={load} />
 
       {/* Pending section */}
       <div>
