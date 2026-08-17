@@ -1,220 +1,242 @@
-# Master Baker SFA Platform — Master Demo Presentation Script & Flow Guide
+# Master Baker SFA Platform — Theoretical Flow & Presentation Guide
 
-> **Live Production URL:** [https://sfa-demo.codeagni.com](https://sfa-demo.codeagni.com)  
-> **Target Audience:** Client Executive Leadership, Sales Directors, IT Auditors & Commercial Managers  
-> **Prepared by:** Solution Architecture & Engineering Team  
-> **Document Version:** 3.0 (Comprehensive Flow)
-
----
-
-## 📋 Executive Presentation Overview
-
-| Demo Act | Platform Role | Key Capabilities Demonstrated | Target Screen URL |
-|---|---|---|---|
-| **Act 1: Sales Rep In-Field Journey** | Sales Representative (`rahul.rep@demo.com`) | Time scheduling, Interactive Store Map (HQ vs Branches), GPS Geofence Check-in, 7-Step Visit Protocol, AI Next Best Action, Competitor Intel, Customer 360, Order Builder & Market Basket Cross-Sell, Spec Sheet Sharing | `/rep/visit`<br>`/rep/customers`<br>`/rep/order/new`<br>`/rep/documents` |
-| **Act 2: Executive Manager Oversight** | Regional Sales Manager (`ahmed.manager@demo.com`) | Geofence Exception Audit Matrix, Commercial Leads Pipeline, Field Shelf Audits & Competitor Feed, Real-time ERP Approvals, Salesperson Forecast Scorecards (MAPE) | `/manager/visit-matrix`<br>`/manager/leads`<br>`/manager/team`<br>`/manager/approvals`<br>`/manager/forecasting` |
-| **Act 3: Strategic Analytics & Gamification** | Both Roles | Power BI Budget vs Actual matrices, Customer Drilldown, Sales Rep Leaderboard, Points & Achievement Badges | `/manager/dashboard`<br>`/rep/home` |
+> **Target Platform:** Master Baker Enterprise Sales Force Automation (SFA) & Manager Portal  
+> **Target Audience:** Executive Leadership, Commercial Directors, Sales Managers & IT Stakeholders  
+> **Document Purpose:** Complete Conceptual Workflow, Feature Explanations, Business Rationale & Presentation Script
 
 ---
 
-## 🎬 ACT 1: Sales Representative In-Field Journey
-
-### 🔑 Login Step
-1. Navigate to: `https://sfa-demo.codeagni.com/login`
-2. Enter Sales Rep credentials:
-   * **Email:** `rahul.rep@demo.com`
-   * **Password:** `Demo@1234`
-3. Click **Sign In**.
-
----
-
-### Step 1.1: Visit Planning with Time Slots & Conflict Prevention (`/rep/visit`)
-1. Navigate to **Visits** in the left sidebar (`/rep/visit`).
-2. Click **`+ Schedule New Visit`**.
-3. **What to highlight to the client:**
-   * **Exact Time Slot & Duration:** Select a customer (e.g. *Al Noor Trading LLC*), pick today's date, choose **Time Slot: `10:00`**, and **Duration: `60 Minutes`**.
-   * **Conflict-Check Engine:** Try scheduling an overlapping visit at the same date/time $\rightarrow$ point out the real-time **⚠️ Schedule Conflict Alert** preventing double-booking across client locations.
-   * Click **Schedule** $\rightarrow$ show the green confirmation notification banner.
-
----
-
-### Step 1.2: Interactive Territory & Store Map (`/rep/visit` ➔ `🗺️ Store Map` Tab)
-1. On `/rep/visit`, click the **`🗺️ Store Map`** tab button.
-2. **What to highlight to the client:**
-   * **Live Rep GPS Beacon:** Point out the pulsing blue marker showing *"You Are Here"*.
-   * **Main Corporate HQs vs Child Outlets:**
-     * **⭐ Gold Star Pins:** Corporate Holding Group Headquarters (e.g. *Al Maya Group Holdings HQ*, *Spinneys Group HQ*, *Americana Hospitality HQ*).
-     * **🏢 Indigo/Blue Pins:** Individual store branches and outlets (*Marina Walk Outlet*, *Deira City Centre*, *Mall of the Emirates*).
-     * **⚠️ Red Alert Pins:** Branches flagged with at-risk credit limits or overdue invoices.
-   * **Corporate Group Filter:** Open the dropdown, select **Al Maya Group Holdings (HQ)** $\rightarrow$ the map auto-zooms to that corporate cluster.
-   * **Direct Store Selection:** Click on **Al Noor Trading LLC** pin on the map:
-     * Right sidebar instantly displays the full **Store Dossier** (distance `8.3 km away`, Credit Limit `AED 120,000`, Open AR `AED 45,000`).
-     * Show the one-click action buttons: **`🚀 Start Field Visit Check-In`**, **`📅 Schedule Visit`**, **`🛒 New Order`**, and **`🧭 Open in Google Maps`**.
-   * Click **`🚀 Start Field Visit Check-In`** to transition directly into the store visit.
+## 📑 Presentation Table of Contents
+1. [Executive Summary & Core Business Challenges](#1-executive-summary--core-business-challenges)
+2. [Act 1: Sales Representative Field Experience (Automation & AI Co-Pilot)](#2-act-1-sales-representative-field-experience)
+   * 2.1 [Intelligent Visit Scheduling & Conflict Prevention](#21-intelligent-visit-scheduling--conflict-prevention)
+   * 2.2 [Spatial Territory Map & Corporate Account Hierarchy](#22-spatial-territory-map--corporate-account-hierarchy)
+   * 2.3 [Active Store Visit Protocol, GPS Telemetry & Voice AI Dictation](#23-active-store-visit-protocol-gps-telemetry--voice-ai-dictation)
+   * 2.4 [AI Next Best Action (NBA) Recommendation Engine](#24-ai-next-best-action-nba-recommendation-engine)
+   * 2.5 [Competitor Intelligence & Shelf Share Audit](#25-competitor-intelligence--shelf-share-audit)
+   * 2.6 [Customer 360 Insights, AR Aging & Expiry Warnings](#26-customer-360-insights-ar-aging--expiry-warnings)
+   * 2.7 [Sales Order Builder & Market Basket Analysis (Cross-Selling)](#27-sales-order-builder--market-basket-analysis-cross-selling)
+   * 2.8 [Technical Spec Sheets & Client Knowledge Base](#28-technical-spec-sheets--client-knowledge-base)
+3. [Act 3: Executive Manager Portal (Governance, Compliance & Procurement)](#3-act-2-executive-manager-portal)
+   * 3.1 [Visit Matrix & Geolocation Exception Auditing](#31-visit-matrix--geolocation-exception-auditing)
+   * 3.2 [Commercial Leads Pipeline & Account Conversion](#32-commercial-leads-pipeline--account-conversion)
+   * 3.3 [Field Team Operations, Shelf Facings & Competitor Feed](#33-field-team-operations-shelf-facings--competitor-feed)
+   * 3.4 [Two-Way Sage X3 ERP Pricing Approvals](#34-two-way-sage-x3-erp-pricing-approvals)
+   * 3.5 [3-Month Procurement Forecasting & Supplier Alignment](#35-3-month-procurement-forecasting--supplier-alignment)
+   * 3.6 [Salesperson Forecast Accuracy Scorecards (MAPE Engine)](#36-salesperson-forecast-accuracy-scorecards-mape-engine)
+4. [Act 3: Strategic Dashboards & Gamification](#4-act-3-strategic-dashboards--gamification)
+   * 4.1 [Power BI Budget vs Actual Multi-Dimensional Analytics](#41-power-bi-budget-vs-actual-multi-dimensional-analytics)
+   * 4.2 [Sales Rep Gamification, Daily Streaks & Recognition](#42-sales-rep-gamification-daily-streaks--recognition)
+5. [Key Strategic Takeaways for Executive Decision Makers](#5-key-strategic-takeaways-for-executive-decision-makers)
 
 ---
 
-### Step 1.3: Active In-Store Visit Workflow (`/rep/visit/[customerId]`)
-*(Direct URL: `https://sfa-demo.codeagni.com/rep/visit/c1111111-0000-0000-0000-000000000001`)*
+## 1. Executive Summary & Core Business Challenges
 
-1. **GPS Geofence Verification & Exception Logging:**
-   * Point out the GPS Distance badge. If the rep is physically away from the store during a demo, show how the system detects the discrepancy (e.g. `2,513 km away`), flags an exception, and logs a manager override note to the permanent audit trail.
-2. **Complete the 7-Question Visit Protocol Checklist:**
-   * Step 1: *Inventory & Expiry Audit*
-   * Step 2: *Pricing & Planogram Compliance*
-   * Step 3: *Competitor Intelligence*
-   * Step 4: *Promotional Displays*
-   * Step 5: *Sample & FOC Trial Product Feedback*
-   * Step 6: *Payment & Invoice Reconciliation (Open AR AED 12,500)*
-   * Step 7: *3-Month Sales Forecast & Reorder Commit*
-3. **Voice AI Mic Dictation:**
-   * Click the **Microphone icon** (`Dictate report`) $\rightarrow$ speak a visit summary aloud. The browser Web Speech API transcribes your spoken voice into text in real-time.
-4. **AI "Next Best Action" (🎯 NBA) Tab:**
-   * Switch to the **`🎯 NBA`** tab.
-   * **Explain the 4 AI Decision Rules:**
-     * `⏰ Rule: Recency Gap` *(Customer hasn't ordered in 38 days $\rightarrow$ prompt re-order)*
-     * `💰 Rule: High Margin` *(Delipaste sauces have 42% gross margin $\rightarrow$ push commercial pitch)*
-     * `📉 Rule: Volume Decline` *(Volume dropped 24% $\rightarrow$ recover lost share)*
-     * `⚠️ Rule: Expiry Push` *(Batch expiring in 22 days $\rightarrow$ pitch clearance price)*
-   * Click **`+ Pitch & Add`** on a recommended product.
-5. **Competitor Intelligence Capture Form:**
-   * Open the Competitor Intel section.
-   * Enter: Competitor (*Puratos / Masterline*), Product (*Baking Improver 10kg*), Observed Price (`AED 140`), Shelf Share (`25%`), and show the **Photo Upload** capability.
-6. **In-Visit Order Cart Drawer & Market Basket Cross-Sell:**
-   * Tap **`+ Add to Cart`** on *Wheat Flour Type 405*.
-   * Click the bottom sticky bar **`View Cart`** to expand the drawer.
-   * Point out the **`Frequently Paired Items (Basket Analysis)`** section:
-     * Suggests *Confibel Apricot Jam* with 61% pair rate.
-     * Click **`+ Add`** right inside the drawer to cross-sell.
-   * Click **`Confirm & Book Order to ERP`** $\rightarrow$ generates Sage X3 Order ID (`SO-2026-XXXXX`).
-7. **Close Visit:**
-   * Select Outcome (*Order Taken & Merchandised*), set Follow-up Date, and click **`Complete & Save Visit`**.
+Food service distribution in the bakery and confectionery sector involves unique operational complexities that standard off-the-shelf CRM tools fail to address:
+
+```
+┌──────────────────────────────────────┬─────────────────────────────────────────────────────────────┐
+│ Industry Operational Challenge       │ SFA Platform Solution Architecture                         │
+├──────────────────────────────────────┼─────────────────────────────────────────────────────────────┤
+│ 🚢 Long Import Lead Times (30–90 Days)│ 6M Historical Velocity + 3M Rolling Procurement Forecasts    │
+│ 🏬 Multi-Branch Corporate Accounts   │ Parent Holding Group vs Child Outlet Hierarchy Modeling     │
+│ 👁️ Field Rep Blindspots on Rep Visit  │ AI "Next Best Action" (NBA) Real-Time Pitch Co-Pilot        │
+│ 📍 Unverified Store Check-Ins        │ Haversine GPS Geofencing with Exception Audit Logs          │
+│ ⏳ Expiring Warehouse Inventory      │ Dynamic Expiry Countdown & Push Recommendation Triggers     │
+│ 📝 Slow Quotation & Approval Cycles  │ Two-Way Sage X3 ERP Integration with Real-Time WebSockets   │
+└──────────────────────────────────────┴─────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-### Step 1.4: Customer 360 Insights & Nearby Sorting (`/rep/customers`)
-1. Navigate to **Customers** (`/rep/customers`).
-2. **GPS Nearby Locator:** Click **`📍 Locate Nearby Accounts (GPS)`** $\rightarrow$ accounts dynamically re-order by proximity (`0.4 km away`, `1.2 km away`).
-3. Click into **Al Noor Trading LLC** (`/rep/customers/c1111111-0000-0000-0000-000000000001`):
-   * **Customer 360 Insights Panel:** Show Sage X3 credit aging buckets (Current, 30d, 60d, 90d+ overdue), payment terms, and monthly run-rate.
-   * **Near-Expiry & Slow-Moving Stock Alerts:** Show warning flags for batches nearing expiration.
+## 2. Act 1: Sales Representative Field Experience
+
+### 2.1 Intelligent Visit Scheduling & Conflict Prevention
+* **The Business Problem:** Sales representatives often plan visits as broad dates without time commitments, leading to inconsistent customer coverage, overlapping visits, and wasted drive time.
+* **How the Platform Solves It:**
+  * Every visit captures both a **planned date** and an **exact time slot** with estimated meeting duration (30, 45, 60, or 90 minutes).
+  * **Real-time Conflict Checking:** When a rep attempts to book a visit overlapping with an existing appointment, the platform flags a conflict alert to prevent double-booking.
+  * **What to Explain:** *"This structure transforms field scheduling from vague daily check-ins into structured, time-managed client itineraries."*
 
 ---
 
-### Step 1.5: Order Builder & Market Basket Analysis (`/rep/order/new`)
-1. Navigate to **New Order** (`/rep/order/new?customer=c1111111-0000-0000-0000-000000000001`).
-2. **Frequently Purchased Section:** Point out the top 4 client favorites sorted strictly by historical purchase volume.
-3. **Live Database Stock Depletion:** Point out `📦 Live Stock: 145 Units`. When an order is placed, PostgreSQL immediately decreases warehouse stock.
-4. **Market Basket Analysis (Apriori Algorithm):**
-   * Add **Wheat Flour Type 405** to cart.
-   * Scroll down to the **`📦 Customers Also Bought (Basket Analysis)`** section.
-   * Highlight **BOS Special Bakery Mix** (`Confidence: 78% · Lift: 2.3x`).
-   * Explain: *"Our algorithm identified that 78% of bakers purchasing Type 405 flour also require specialty bakery mixes. Reps can add it in 1 click."*
-5. **Special Price Request Workflow:**
-   * Click **`Request Special Price`** on an item $\rightarrow$ Enter Target Price (`AED 75` vs `AED 85`) and Reason (*"Chef matching bulk competitor bid"*).
-   * Submit approval request $\rightarrow$ status switches to `⏳ Pending Manager Approval`.
+### 2.2 Spatial Territory Map & Corporate Account Hierarchy
+* **The Business Problem:** Sales reps struggle to visualize account clusters and distinguish between corporate parent decision-makers and individual branch kitchens.
+* **How the Platform Solves It:**
+  * **Visual Map Hierarchy:**
+    * **⭐ Gold Star Pins:** Corporate Holding Group Headquarters (e.g. *Al Maya Group Holdings HQ*, *Spinneys Group HQ*, *Americana Hospitality HQ*).
+    * **🏢 Indigo Pins:** Individual store branches and retail bakeries (*Marina Walk Outlet*, *Deira City Centre*, *Al Quoz Central Hub*).
+    * **⚠️ Red Pins:** Outlets flagged with at-risk credit limits or overdue invoices.
+    * **📍 Live GPS Beacon:** Real-time device location showing where the rep is standing.
+  * **Interactive Store Dossier:** Clicking any pin opens a full briefing card (distance in kilometers, credit limit, open AR balance, store manager contact) and provides one-click action buttons to start a visit, schedule an appointment, or place an order.
+  * **What to Explain:** *"Reps can see their entire territory visually, identify nearby stores between appointments, and navigate directly using turn-by-turn Google Maps."*
 
 ---
 
-### Step 1.6: Document Knowledge Base & Client Sharing (`/rep/documents`)
-1. Navigate to **Documents** (`/rep/documents`).
-2. **Technical Knowledge Base for New Joiners:** Select a product SKU (e.g. *Cocoa Powder / Wheat Flour*) to inspect Bill of Materials (BOM), recommended dosage rates, application recipes, and storage conditions.
-3. **1-Click Client Dispatch:** Click **`Send WhatsApp`** or **`Send Email`** to send the PDF specification sheet directly to the client's phone.
-4. **Upload Document:** Show how reps can upload spec sheets, syncing to PostgreSQL and SharePoint.
+### 2.3 Active Store Visit Protocol, GPS Telemetry & Voice AI Dictation
+* **The Business Problem:** Store visits often lack standardization; reps forget to check expired stock or audit competitor pricing, and typing notes on a phone keyboard is slow.
+* **How the Platform Solves It:**
+  * **GPS Geofence Verification:** Automatically compares device coordinates against the customer's registered store coordinates. If the rep is outside the allowed radius (e.g. 150m), the platform flags a location exception and logs a manager override note to ensure field accountability.
+  * **7-Step Standardized Protocol Checklist:**
+    1. *Inventory & Expiry Audit* (Check shelves for near-expiry batches).
+    2. *Pricing & Planogram Compliance* (Verify contracted shelf tags).
+    3. *Competitor Intelligence* (Capture competitor price cuts).
+    4. *Promotional & POP Display Audit* (Confirm marketing assets are installed).
+    5. *Sample & FOC Trial Product Feedback* (Mandatory pre-exit check on trial ingredients).
+    6. *Payment & Invoice Reconciliation* (Review open balances).
+    7. *3-Month Sales Forecast & Reorder Commit* (Align on future production demand).
+  * **Voice AI Dictation:** Reps click the microphone icon and speak naturally. Spoken audio is transcribed directly into the visit report in real time using browser Web Speech AI.
+  * **What to Explain:** *"Standardizing every store visit to 7 mandatory audit questions ensures thorough field execution and gives management complete visibility across the entire territory."*
 
 ---
 
-## 👔 ACT 2: Executive Manager Oversight
-
-### 🔑 Role Switch Step
-1. Log out or open a private window.
-2. Log in as Executive Manager:
-   * **Email:** `ahmed.manager@demo.com`
-   * **Password:** `Demo@1234`
-3. Click **Sign In**.
-
----
-
-### Step 2.1: Visit Matrix & Geolocation Exception Audit (`/manager/visit-matrix`)
-1. Navigate to **Visit Matrix** (`/manager/visit-matrix`).
-2. **Executive KPI Cards:**
-   * Total Visits Completed
-   * GPS Geofence Verified Rate %
-   * 7-Question Protocol Compliance Rate (96.4%)
-   * FOC Trial Sample Feedback Rate (100%)
-3. **Geofence Telemetry & Override Audit:**
-   * Click **`📍 Geo-Fence Telemetry`** on a visit flagged with `⚠️ Exception`.
-   * Show the audit card: *"Check-in distance recorded at 2,513,775 meters from client site. Allowed: 150m. Override Status: Logged in Audit Trail."*
-4. **Expandable 7-Question Protocol Log:**
-   * Audit checklist answers, rep notes, voice dictation transcripts, and FOC trial feedback.
-   * Click **`Export to Excel`** to download the compliance matrix.
+### 2.4 AI Next Best Action (NBA) Recommendation Engine
+* **The Business Problem:** With over 500 SKUs in the catalog, sales reps default to only pitching the few items they personally remember, missing high-margin opportunities and customer re-order signals.
+* **How the Platform Solves It:**
+  * Uses a multi-factor composite scoring engine (0–100) combining 4 transparent business rules:
+    * `⏰ Recency Gap (35% Weight)`: Identifies customers whose normal replenishment cadence has elapsed (e.g. no order in > 30 days) $\rightarrow$ triggers a re-order reminder.
+    * `💰 High Margin Push (25% Weight)`: Prioritizes highly profitable items (e.g. Delipaste sauces with > 30% gross margin) to increase sales profitability.
+    * `📉 Volume Decline (20% Weight)`: Detects when a customer's purchasing drops by > 20% compared to previous quarters $\rightarrow$ prompts the rep to investigate and recover lost share.
+    * `⚠️ Near Expiry Clearance (20% Weight)`: Identifies warehouse batches expiring within 45 days $\rightarrow$ prompts promotional clearance pricing to eliminate write-offs.
+  * **Transparent Provenance Badges:** Every recommendation explains *why* it was suggested, building trust with the sales team.
+  * **What to Explain:** *"The AI acts as an intelligent co-pilot in the rep's pocket, telling them exactly what to pitch, why to pitch it, and how it benefits both the customer and company profitability."*
 
 ---
 
-### Step 2.2: Commercial Leads Pipeline (`/manager/leads`)
-1. Navigate to **Leads Pipeline** (`/manager/leads`).
-2. Show incoming commercial prospects (*Bake & Brew Artisanal Bakery*, *Golden Crust Pastry LLC*).
-3. Demonstrate drag/select stage progression: `New` $\rightarrow$ `Qualified` $\rightarrow$ `Converted to Sage X3`.
-4. Click **`Export to Excel`** to demonstrate executive pipeline reporting.
+### 2.5 Competitor Intelligence & Shelf Share Audit
+* **The Business Problem:** Competitive price cuts, new rival brands, and shifting shelf spaces go unnoticed by headquarters until sales drop weeks later.
+* **How the Platform Solves It:**
+  * Embedded directly into the visit closure workflow.
+  * Captures competitor name (e.g. *Puratos, Masterline*), product category, observed retail price (AED), estimated shelf share percentage, promotional details, and photo upload.
+  * Synchronizes instantly to the executive manager's competitor intelligence feed.
+  * **What to Explain:** *"Every field visit doubles as a live market research touchpoint, giving commercial directors early warning of competitor price movements."*
 
 ---
 
-### Step 2.3: Team Management & In-Store Shelf Audits (`/manager/team`)
-1. Navigate to **Team Ops** (`/manager/team`).
-2. Select a sales rep (*Rahul Menon*).
-3. **In-Store Shelf Audits Table:**
-   * Review audited SKUs, On-Shelf vs Backstore units, Shelf Facings count, and Observed Shelf Prices.
-4. **Competitor Intelligence Feed:**
-   * Review competitor mentions, promotional activities, and photos captured by reps in the field.
+### 2.6 Customer 360 Insights, AR Aging & Expiry Warnings
+* **The Business Problem:** Reps walk into meetings blind to accounting disputes, unpaid invoices, or credit holds, risking uncollectible orders.
+* **How the Platform Solves It:**
+  * **Customer 360 Panel:** Aggregates live Sage X3 financial data, including credit limits, net receivables, credit utilization %, and aging buckets (Current, 30 days, 60 days, 90+ days overdue).
+  * **Batch Expiry & Slow-Moving Stock Indicators:** Displays countdown badges on products with near-expiry inventory (e.g. *Expires in 22 days*), allowing reps to negotiate bulk clearance discounts before goods spoil.
+  * **What to Explain:** *"Reps have complete commercial transparency before discussing new orders, protecting cash flow and resolving invoice discrepancies on the spot."*
 
 ---
 
-### Step 2.4: Real-time Price Approvals & Sage ERP Simulator (`/manager/approvals`)
-1. Navigate to **Approvals** (`/manager/approvals`).
-2. Show the pending discount request submitted by Rahul Menon during Act 1 (`AED 75` requested vs `AED 85` list price).
-3. Review margin impact $\rightarrow$ Click **`Approve Discount`**.
-4. **Two-Way ERP Simulator:** Point out the **ERP Simulator Widget** demonstrating how approved quotes sync bidirectionally with Sage X3 Syracuse endpoints.
+### 2.7 Sales Order Builder & Market Basket Analysis (Cross-Selling)
+* **The Business Problem:** Sales order entry is often slow and manual, failing to capitalize on natural product pairings that increase average order value.
+* **How the Platform Solves It:**
+  * **Frequently Purchased Section:** Highlights the customer's top 4 historical favorites sorted by volume for rapid 1-click re-ordering.
+  * **Live PostgreSQL Database Depletion:** Immediately decrements available warehouse units upon order submission, auto-switching items to *Out of Stock* if inventory reaches zero and suggesting pre-configured substitutes.
+  * **Market Basket Analysis (Apriori Association Engine):**
+    * When an item is added to the cart (e.g. *Wheat Flour Type 405*), the platform scans thousands of past transaction patterns and suggests proven companion products (e.g. *BOS Special Bakery Mix* at 78% confidence and 2.3x lift).
+    * Available in both the main Order Builder and the In-Visit Cart Drawer.
+  * **Special Price Discount Approval Workflow:** Allows reps to request custom contract pricing with a commercial justification, sending real-time approval requests to the manager portal.
+  * **What to Explain:** *"Market basket analysis automatically upsells complementary ingredients, raising order values while preventing inventory stockouts."*
 
 ---
 
-### Step 2.5: Salesperson Forecast Scorecards & Accuracy Tracking (`/manager/forecasting`)
-1. Navigate to **Forecasting** (`/manager/forecasting`).
-2. **6M Historical Run-Rate + 3M Procurement Matrix:** Show aggregated $M-6 \dots M-1$ sales history and $M+1, M+2, M+3$ supplier procurement quantities.
-3. **Salesperson Forecast-Performance Scorecard (Bottom Table):**
-   * Review multi-quarter accuracy trends (`2025-Q3`, `2025-Q4`, `2026-Q1`, `2026-Q2`).
-   * Point out **MAPE (Mean Absolute Percentage Error)**, Variance %, and **Tier Grades (Tier A / Tier B / Tier C)**.
-   * Click **`Export to Excel`** for the executive forecast accuracy report.
+### 2.8 Technical Spec Sheets & Client Knowledge Base
+* **The Business Problem:** Junior sales reps frequently call technical bakery experts to answer basic customer questions about dosage rates, recipes, or storage conditions.
+* **How the Platform Solves It:**
+  * Provides a self-service Bill of Materials (BOM) knowledge base for every SKU, containing dosage guidelines, formulation recipes, allergen data, and storage temperatures.
+  * **1-Click Client Dispatch:** Reps can send official PDF specification sheets directly to the client's phone via WhatsApp or email with one click.
+  * **What to Explain:** *"New joiners can answer technical chef questions independently on day one, accelerating the sales cycle."*
 
 ---
 
-## 📊 ACT 3: Strategic Dashboards, Budget vs Actual & Gamification
+## 3. Act 2: Executive Manager Portal
 
-### Step 3.1: Manager Power BI Sales Dashboard (`/manager/dashboard` & `/manager/budget-actual`)
-1. Navigate to **Power BI Dashboard** (`/manager/dashboard`).
-2. **Tab 1: Sales Reps Performance Matrix:** Budget Targets vs Actual YTD, Achievement %, Margins, Open AR, and assigned account counts.
-3. **Tab 2: Master SKU Portfolio Matrix:** SKU-level Budget vs Actual units and AED sales.
-4. **Tab 3: Customer Account SKU Drilldown:** Drill down into specific corporate accounts (*Spinneys, Carrefour, Al Maya*) to audit SKU-level purchasing performance.
-5. Demonstrate **Export to Excel (`.xlsx`)** on every analytics table.
-
----
-
-### Step 3.2: Sales Rep Home Dashboard & Gamification (`/rep/home`)
-1. Switch back to Sales Rep view (`/rep/home`).
-2. **Gamification & Daily Streaks Banner:**
-   * Show rep points, current daily visit streak (e.g. *🔥 5-Day Streak*), monthly leaderboard rank (*#1 in Dubai Territory*), and unlocked achievement badges (*Speed Demonstrator, Top Cross-Seller*).
-3. **Recent Orders & Sync Status:**
-   * Review recent orders booked into Sage X3 with live ERP status badges.
+### 3.1 Visit Matrix & Geolocation Exception Auditing
+* **The Business Problem:** Sales managers lack verifiable proof of field activity and cannot audit whether reps adhered to quality standards during client walkthroughs.
+* **How the Platform Solves It:**
+  * **Executive Compliance KPIs:** Tracks overall visit completion rates, GPS geofence verification percentage, 7-question protocol compliance, and sample feedback capture rates.
+  * **Geofence Telemetry Audit Trail:** Details check-in distances, perimeter violation deltas (e.g. rep located 2,513 km away), and recorded manager override justifications.
+  * **Protocol Inspection:** Managers can expand any visit to audit every checklist answer, rep field notes, voice transcripts, and trial sample outcomes.
+  * **What to Explain:** *"Managers have complete operational control to distinguish between verified store visits and remote exceptions."*
 
 ---
 
-## 🎯 5 Golden Talking Points for the Closing
-
-1. **Eliminates Middle-Man Trader Guesswork:** 6-Month historical velocity + 3-Month supplier forecast matrices allow Master Baker to order exact container volumes from European suppliers with 30–90 day lead times.
-2. **AI with Full Transparency:** Every recommendation (Next Best Action & Market Basket cross-sell) explains *why* it was suggested with transparent provenance tags.
-3. **Field Rep Accountability:** 7-question visit protocols, mandatory FOC trial feedback guards, and GPS geofence exception tracking ensure store visits actually happen.
-4. **Integrated Enterprise ERP:** Real-time stock depletion in PostgreSQL, two-way discount approval workflows, and Sage X3 Syracuse REST/OData mapping.
-5. **Instant Board-Ready Reporting:** One-click **Export to Excel (`.xlsx`)** enabled across every table, matrix, and scorecard on the platform.
+### 3.2 Commercial Leads Pipeline & Account Conversion
+* **The Business Problem:** New customer prospects captured in the field often get lost in personal notebooks without formal qualification or territory tracking.
+* **How the Platform Solves It:**
+  * Centralizes all field-captured commercial leads with chef contact information, meeting notes, and assigned sales representatives.
+  * Visualizes the prospect lifecycle across 4 distinct stages: `New` $\rightarrow$ `Qualified` $\rightarrow$ `Converted to Sage X3` $\rightarrow$ `Lost`.
+  * **What to Explain:** *"Ensures every prospective bakery or hotel kitchen is methodically tracked and converted into an active trading account."*
 
 ---
 
-*© 2026 Master Baker ME · SFA Platform Master Demonstration Script*
+### 3.3 Field Team Operations, Shelf Facings & Competitor Feed
+* **The Business Problem:** Headquarters has limited visibility into how products are actually merchandised on client shelves and what competitors are doing in each territory.
+* **How the Platform Solves It:**
+  * **In-Store Shelf Audits Table:** Audits on-shelf quantity, backstore reserve units, shelf facing counts, and observed shelf retail prices per SKU.
+  * **Territory Competitor Feed:** Aggregates competitor price promotions and shelf photos across all sales representatives in one feed.
+  * **What to Explain:** *"Gives sales leadership real-time merchandising intelligence without having to conduct physical store audits themselves."*
+
+---
+
+### 3.4 Two-Way Sage X3 ERP Pricing Approvals
+* **The Business Problem:** Discount approvals typically involve back-and-forth phone calls and delayed emails, slowing down deal closing.
+* **How the Platform Solves It:**
+  * Rep discount requests appear instantly on the manager portal with full gross margin impact analysis.
+  * Managers click **Approve** or **Reject**, pushing updates in real time to the rep's screen via WebSockets and syncing bidirectionally with Sage X3 Syracuse REST endpoints.
+  * **What to Explain:** *"Reduces discount approval turnaround time from hours to seconds while maintaining strict margin governance."*
+
+---
+
+### 3.5 3-Month Procurement Forecasting & Supplier Alignment
+* **The Business Problem:** As a middle-man trader importing specialty goods from European suppliers (Germany, Italy, Belgium), Master Baker faces 30 to 90 days of maritime shipping lead time. Ordering inaccuracies lead to either costly stockouts or expiring inventory.
+* **How the Platform Solves It:**
+  * Displays 6 months of historical customer purchase velocity ($M-6 \dots M-1$) alongside 3 rolling months of forward demand projections ($M+1, M+2, M+3$).
+  * Aggregates territory demand across all customer accounts to generate accurate supplier Purchase Orders for European manufacturers.
+  * **What to Explain:** *"Bridges field sales demand with supply chain procurement, ensuring European containers arrive exactly when customer production schedules require."*
+
+---
+
+### 3.6 Salesperson Forecast Accuracy Scorecards (MAPE Engine)
+* **The Business Problem:** Sales reps often submit inflated forecasts to look ambitious or artificially low forecasts to easily beat targets, distorting procurement planning.
+* **How the Platform Solves It:**
+  * Audits historical quarterly forecast accuracy across multiple consecutive quarters (`2025-Q3`, `2025-Q4`, `2026-Q1`, `2026-Q2`).
+  * Uses **Mean Absolute Percentage Error (MAPE)** and Variance % to evaluate committed forecasts against actual sales volume.
+  * Automatically ranks sales reps into performance tiers:
+    * **Tier A (Excellence):** Mean accuracy $\ge 93\%$, MAPE $\le 7\%$.
+    * **Tier B (Reliable):** Mean accuracy $88\% - 92\%$, MAPE $8\% - 12\%$.
+    * **Tier C (Needs Review):** Mean accuracy $< 88\%$, MAPE $> 12\%$.
+  * **What to Explain:** *"Holding sales reps accountable for forecast accuracy ensures supply chain teams can trust the procurement numbers they receive."*
+
+---
+
+## 4. Act 3: Strategic Dashboards & Gamification
+
+### 4.1 Power BI Budget vs Actual Multi-Dimensional Analytics
+* **The Business Problem:** Executive board members and commercial directors need multi-dimensional reporting across sales reps, product SKUs, and customer categories.
+* **How the Platform Solves It:**
+  * **Sales Rep Matrix:** Compares 2026 budget targets against YTD actuals, gross margin %, open AR exposure, and assigned account counts.
+  * **Master Portfolio SKU Matrix:** Tracks SKU-level sales volumes, category tags (Egg, Ingredients, Finished Goods), and unit margins.
+  * **Customer Category & Account Drilldown:** Allows leadership to drill down into specific corporate accounts (*Spinneys, Carrefour, Al Maya*) to audit SKU-level purchasing health.
+  * **One-Click Excel Export:** Every matrix includes a green `.xlsx` export button for instant board presentation preparation.
+  * **What to Explain:** *"Provides executive leadership with granular, real-time commercial analytics across territories, products, and customer categories."*
+
+---
+
+### 4.2 Sales Rep Gamification, Daily Streaks & Recognition
+* **The Business Problem:** Field sales can be repetitive, leading to rep burnout and inconsistent daily visit activity.
+* **How the Platform Solves It:**
+  * **Gamification Banner:** Rewards reps with points for completing visit checklists, recording competitor intelligence, and booking cross-sell orders.
+  * **Daily Visit Streaks:** Tracks consecutive days of completed visit itineraries (e.g. *🔥 5-Day Streak*).
+  * **Territory Leaderboards & Badges:** Displays monthly territory ranking and unlocks achievement badges (*Speed Demonstrator, Top Cross-Seller, Quality Auditor*).
+  * **What to Explain:** *"Gamification turns daily field compliance into a motivating, rewarding experience for the sales team."*
+
+---
+
+## 5. Key Strategic Takeaways for Executive Decision Makers
+
+1. **Eliminates Import Guesswork:** 6-Month historical velocity + 3-Month supplier forecast matrices allow Master Baker to order exact container volumes from European suppliers with 30–90 day lead times.
+2. **Transparent, Explainable AI:** Recommendations (Next Best Action & Market Basket cross-sell) explain *why* they were suggested using transparent provenance rules, avoiding opaque "black box" algorithms.
+3. **Guaranteed Field Accountability:** 7-question visit protocols, mandatory FOC sample feedback guards, and GPS geofence exception tracking ensure store walkthroughs actually happen.
+4. **Seamless Enterprise ERP Integration:** Real-time PostgreSQL stock depletion, two-way pricing approvals, and Syracuse REST/OData mapping keep field sales synchronized with core back-office accounting.
+5. **Instant Board-Ready Governance:** One-click **Export to Excel (`.xlsx`)** enabled across every data table, matrix, and scorecard on the platform.
+
+---
+
+*© 2026 Master Baker ME · SFA Platform Master Conceptual Presentation Guide*
