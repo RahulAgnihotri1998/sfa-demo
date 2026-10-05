@@ -6,8 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "tunnel": "cloudflared tunnel --config cloudflared-config.yml run sfa-demo"
+    "tunnel": "cloudflared tunnel --protocol http2 --config cloudflared-config.yml run sfa-demo",
+    "tunnel:quick": "cloudflared tunnel --protocol http2 --url http://localhost:3000"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.1",

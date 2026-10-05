@@ -23,7 +23,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     
     // Change this to your deployed live Vercel URL or external staging IP
-    private val appUrl = "https://foster-eugene-domains-fitting.trycloudflare.com"
+    private val appUrl = "https://sfa-demo.codeagni.com"
     private val locationPermissionCode = 123
     private var pendingGeoCallback: GeolocationPermissions.Callback? = null
     private var pendingGeoOrigin: String? = null
