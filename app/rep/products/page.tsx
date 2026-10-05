@@ -86,7 +86,7 @@ export default function ProductsPage() {
         <div>
           <h1 className="text-lg font-semibold text-gray-900">Product Catalog</h1>
           <p className="text-xs text-gray-400 mt-0.5">
-            Master Baker Portfolio · {filtered.length} products
+            Enterprise SFA Portfolio · {filtered.length} products
           </p>
         </div>
         <div className="flex items-center gap-2">

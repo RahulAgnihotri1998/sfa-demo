@@ -152,7 +152,7 @@ export default function NewCustomerPage() {
 
       <div>
         <h1 className="text-lg font-semibold text-gray-900">Add New Customer</h1>
-        <p className="text-xs text-gray-400 mt-0.5">Register a new client account in Master Baker Portal</p>
+        <p className="text-xs text-gray-400 mt-0.5">Register a new client account in SFA Portal</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">

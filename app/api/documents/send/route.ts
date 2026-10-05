@@ -50,14 +50,14 @@ export async function POST(request: Request) {
   try {
     if (hasSMTP) {
       await transporter.sendMail({
-        from: process.env.SMTP_FROM || `Master Baker <${process.env.SMTP_USERNAME}>`,
+        from: process.env.SMTP_FROM || `SFA Portal <${process.env.SMTP_USERNAME}>`,
         to: recipientEmail,
-        subject: `${document.title} — Master Baker Portal`,
+        subject: `${document.title} — SFA Portal`,
         html: `
           <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 560px; margin: 0 auto; padding: 24px; color: #0f172a;">
             <div style="background: linear-gradient(135deg, #1a34a0, #2952e3, #5b21b6); border-radius: 14px; padding: 24px; margin-bottom: 24px;">
-              <h1 style="color: white; margin: 0; font-size: 20px;">Master Baker Portal</h1>
-              <p style="color: rgba(255,255,255,0.75); margin: 4px 0 0; font-size: 13px;">Document Sharing</p>
+              <h1 style="color: white; margin: 0; font-size: 20px;">SFA Portal</h1>
+              <p style="color: rgba(255,255,255,0.75); margin: 4px 0 0; font-size: 13px;">Enterprise Document Sharing</p>
             </div>
             
             <p style="margin-top: 0;">Dear <strong>${customer.contact_name ?? customer.name}</strong>,</p>
@@ -70,10 +70,10 @@ export async function POST(request: Request) {
               ${fullDocUrl ? `<a href="${fullDocUrl}" target="_blank" style="display: inline-block; margin-top: 12px; background: #2952e3; color: white; text-decoration: none; padding: 8px 18px; border-radius: 8px; font-size: 13px; font-weight: 600;">View & Download Document →</a>` : ""}
             </div>
             
-            <p style="color: #64748b; font-size: 13px;">Regards,<br/><strong>${user?.email ?? "Master Baker Team"}</strong></p>
+            <p style="color: #64748b; font-size: 13px;">Regards,<br/><strong>${user?.email ?? "SFA Portal Team"}</strong></p>
             
             <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
-            <p style="color: #94a3b8; font-size: 11px; margin: 0;">Sent via Master Baker Portal</p>
+            <p style="color: #94a3b8; font-size: 11px; margin: 0;">Sent via SFA Portal</p>
           </div>
         `,
       });

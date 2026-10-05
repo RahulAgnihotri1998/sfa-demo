@@ -76,7 +76,7 @@ export default function RepForecastingPage() {
   };
 
   const handleSendToPurchasing = () => {
-    setSuccessMsg("📦 Trader Procurement Forecast successfully submitted to Master Baker Purchasing Team! Supplier purchase orders generated.");
+    setSuccessMsg("📦 Trader Procurement Forecast successfully submitted to Procurement Purchasing Team! Supplier purchase orders generated.");
     setTimeout(() => setSuccessMsg(null), 6000);
   };
 

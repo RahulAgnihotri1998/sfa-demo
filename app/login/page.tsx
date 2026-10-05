@@ -55,16 +55,41 @@ export default function LoginPage() {
 
       <div className="w-full max-w-sm animate-in relative z-10">
         {/* Logo / Brand */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-white shadow-brand border border-gray-100 mb-4 max-w-[220px]">
-            <img
-              src="https://i0.wp.com/www.masterbakerme.com/wp-content/uploads/2024/07/cropped-Artboard-1.png?w=805&ssl=1"
-              alt="Master Baker Logo"
-              className="w-full h-auto object-contain"
-            />
+        <div className="text-center mb-8 flex flex-col items-center">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-brand-700 via-brand-600 to-indigo-500 shadow-xl shadow-brand-500/25 flex items-center justify-center p-3.5 mb-3 border border-white/30 backdrop-blur-sm">
+            <svg
+              viewBox="0 0 32 32"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-full h-full text-white drop-shadow"
+            >
+              <path
+                d="M16 3L27.5 9.5V22.5L16 29L4.5 22.5V9.5L16 3Z"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="opacity-75"
+              />
+              <path
+                d="M16 3V16M16 16L27.5 22.5M16 16L4.5 22.5"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="opacity-60"
+              />
+              <circle cx="16" cy="16" r="3" fill="#ffffff" />
+              <circle cx="16" cy="16" r="5" stroke="#ffffff" strokeWidth="1" className="opacity-40 animate-pulse" />
+            </svg>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Master Baker</h1>
-          <p className="text-sm text-gray-500 mt-1.5">Manager &amp; Customer Portal</p>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">SFA Portal</h1>
+            <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded bg-brand-50 text-brand-700 border border-brand-200">
+              PRO
+            </span>
+          </div>
+          <p className="text-sm text-gray-500 mt-1">Enterprise Sales Force Automation</p>
         </div>
 
         {/* Login Card */}

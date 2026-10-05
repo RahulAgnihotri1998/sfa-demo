@@ -11,8 +11,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Master Baker — Manager & Customer Portal",
-  description: "Master Baker Enterprise Manager & Customer Portal",
+  title: "SFA Portal — Enterprise Sales Management",
+  description: "Enterprise Sales Force Automation & Management Portal",
   manifest: "/manifest.json",
 };
 

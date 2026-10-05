@@ -23,6 +23,7 @@ import {
   TrendingUp,
   BarChart3,
 } from "lucide-react";
+import BrandLogo from "@/components/BrandLogo";
 
 interface SidebarProps {
   role: string;
@@ -117,14 +118,7 @@ export default function Sidebar({
         </button>
 
         <div className="flex items-center gap-2">
-          <div className="h-8 px-2 py-0.5 rounded-lg bg-white flex items-center justify-center shadow-sm border border-gray-200">
-            <img
-              src="https://i0.wp.com/www.masterbakerme.com/wp-content/uploads/2024/07/cropped-Artboard-1.png?w=805&ssl=1"
-              alt="Master Baker"
-              className="h-6 object-contain"
-            />
-          </div>
-          <span className="font-bold text-gray-900 text-xs tracking-tight">Master Baker Portal</span>
+          <BrandLogo size="sm" variant="light" />
         </div>
 
         <div className="relative">
@@ -147,19 +141,7 @@ export default function Sidebar({
       <aside className={`sidebar-root${isDrawerOpen ? " sidebar-open" : ""}`}>
         {/* Drawer header inside sidebar */}
         <div className="sidebar-logo justify-between">
-          <div className="flex items-center gap-3">
-            <div className="h-10 px-2 rounded-xl bg-white flex items-center justify-center shadow-sm flex-shrink-0">
-              <img
-                src="https://i0.wp.com/www.masterbakerme.com/wp-content/uploads/2024/07/cropped-Artboard-1.png?w=805&ssl=1"
-                alt="Master Baker"
-                className="h-7 object-contain"
-              />
-            </div>
-            <div className="min-w-0">
-              <p className="font-bold text-white text-sm leading-tight truncate">Master Baker</p>
-              <p className="text-[10px] text-blue-300 uppercase tracking-widest leading-tight">Manager &amp; Customer Portal · {role}</p>
-            </div>
-          </div>
+          <BrandLogo size="md" variant="glass" roleSubtitle={role} />
 
           {/* Close button visible only on mobile inside side drawer */}
           <button

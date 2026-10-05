@@ -32,12 +32,12 @@ export async function POST(request: Request) {
     const senderEmail = user?.email || "rahul@masterbaker.com";
     const hasSMTP = process.env.SMTP_USERNAME && process.env.SMTP_PASSWORD;
 
-    const emailSubject = `Executive Sales Budget vs Actual Report (2026 YTD) — Master Baker`;
+    const emailSubject = `Executive Sales Budget vs Actual Report (2026 YTD) — SFA Portal`;
 
     const htmlBody = `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 650px; margin: 0 auto; padding: 24px; color: #1e293b; line-height: 1.5;">
         <div style="background: linear-gradient(135deg, #1e3a8a, #2563eb, #7c3aed); border-radius: 14px; padding: 24px; color: white; margin-bottom: 20px;">
-          <h1 style="margin: 0; font-size: 22px; font-weight: 800;">Master Baker — Executive Sales Analytics</h1>
+          <h1 style="margin: 0; font-size: 22px; font-weight: 800;">SFA Portal — Executive Sales Analytics</h1>
           <p style="margin: 6px 0 0; font-size: 13px; color: rgba(255,255,255,0.85);">Sales Budget vs Actual 2026 Performance Report</p>
         </div>
 
@@ -65,23 +65,23 @@ export async function POST(request: Request) {
         </div>
 
         <p style="font-size: 12px; color: #64748b;">
-          📎 Attached is the complete <strong>Master_Baker_Sales_Budget_vs_Actual_2026.csv</strong> containing SKU-level actuals, customer category splits, receivables aging, and margin analysis.
+          📎 Attached is the complete <strong>SFA_Sales_Budget_vs_Actual_2026.csv</strong> containing SKU-level actuals, customer category splits, receivables aging, and margin analysis.
         </p>
 
         <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
-        <p style="color: #94a3b8; font-size: 11px; margin: 0;">Dispatched automatically via Master Baker SFA Portal</p>
+        <p style="color: #94a3b8; font-size: 11px; margin: 0;">Dispatched automatically via SFA Portal</p>
       </div>
     `;
 
     if (hasSMTP) {
       await transporter.sendMail({
-        from: process.env.SMTP_FROM || `Master Baker Analytics <${process.env.SMTP_USERNAME}>`,
+        from: process.env.SMTP_FROM || `SFA Analytics <${process.env.SMTP_USERNAME}>`,
         to: recipientEmail,
         subject: emailSubject,
         html: htmlBody,
         attachments: [
           {
-            filename: "Master_Baker_Sales_Budget_vs_Actual_2026.csv",
+            filename: "SFA_Sales_Budget_vs_Actual_2026.csv",
             content: csvContent,
             contentType: "text/csv",
           },

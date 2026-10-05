@@ -256,9 +256,9 @@ export default function DocumentsPage() {
     const fullUrl = getFullUrl(doc.file_url);
 
     const text = encodeURIComponent(
-      `Dear ${customer.name},\n\nPlease review the official technical document attached from Master Baker:\n*${doc.title}*\n\n📄 Real Document Link:\n${fullUrl}${
+      `Dear ${customer.name},\n\nPlease review the official technical document attached from SFA Portal:\n*${doc.title}*\n\n📄 Real Document Link:\n${fullUrl}${
         message ? `\n\nNote: ${message}` : ""
-      }\n\nBest regards,\nMaster Baker Team`
+      }\n\nBest regards,\nSFA Portal Team`
     );
 
     const {

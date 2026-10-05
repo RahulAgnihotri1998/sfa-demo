@@ -133,7 +133,7 @@ export default function AddProductPage() {
         <div className="relative z-10 flex items-center justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-1.5 bg-white/10 backdrop-blur px-3 py-1 rounded-full text-xs font-semibold text-blue-100 mb-2">
-              <PlusCircle size={13} className="text-yellow-300" /> Master Baker Portfolio Management
+              <PlusCircle size={13} className="text-yellow-300" /> SFA Portfolio Management
             </div>
             <h1 className="text-2xl font-bold tracking-tight">Add New Master Product SKU</h1>
             <p className="text-blue-100 text-xs mt-1">
